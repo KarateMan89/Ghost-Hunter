@@ -16,10 +16,16 @@ int main(int argc, char *argv[])
 void printrooms(RoomLinkedList* b){
     RoomNodeType *u =b->head; 
     while(u !=NULL){
-    printf("%s",u->room->name);
+    printf("-------------------%s----------------\n",u->room->name);
+    printconnected(u->room->ConnectedRooms);
     u=u->next;
+}}
+void printconnected(RoomLinkedList* b){
+    RoomNodeType *u =b->head; 
+    while(u !=NULL){printf("%s\n",u->room->name);u=u->next;
+    }
 }
-}
+
 /*
   Function:  randInt
   Purpose:   returns a pseudo randomly generated number, 
@@ -52,7 +58,7 @@ float randFloat(float a, float b) {
 void initBuilding(BuildingType* building){
     // GhostType* ghost = (GhostType*) calloc(1,sizeof(GhostType));
     // building->theGhost = ghost;
-    initRoomList(building->MasterRooms);
+    initRoomList(&building->MasterRooms);
 }
 
 void appendRoom(RoomLinkedList* list, RoomNodeType* new){
@@ -65,13 +71,29 @@ void appendRoom(RoomLinkedList* list, RoomNodeType* new){
   }
 }
 
-void connectRooms(RoomType *x, RoomNodeType* y){
+void connectRooms(RoomType *x, RoomType* y){
+    RoomNodeType* new = calloc(1,sizeof(RoomNodeType));
+    
+    
+    new->room = y;
     if(x->ConnectedRooms->head==NULL){
-        x->ConnectedRooms->head = y->room->name;
-        x->ConnectedRooms->tail = y->room->name;
+        x->ConnectedRooms->head = new;
+        x->ConnectedRooms->tail = new;
+        if(y->ConnectedRooms->head ==NULL){
+            RoomNodeType* newa = calloc(1,sizeof(RoomNodeType));
+            newa->room = x;
+            y->ConnectedRooms->head=newa;
+            y->ConnectedRooms->tail=newa;
+        }
     }else{
-        x->ConnectedRooms->tail->next = y->room->name;
-        x->ConnectedRooms->tail = y->room->name;
+        x->ConnectedRooms->tail->next = new;
+        x->ConnectedRooms->tail = new;
+        if(y->ConnectedRooms->head ==NULL){
+            RoomNodeType* newa = calloc(1,sizeof(RoomNodeType));
+            newa->room = x;
+            y->ConnectedRooms->head=newa;
+            y->ConnectedRooms->tail=newa;
+        }
     }
 }
 
