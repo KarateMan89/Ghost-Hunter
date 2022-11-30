@@ -67,11 +67,11 @@ void appendRoom(RoomLinkedList* list, RoomNodeType* new){
 
 void connectRooms(RoomType *x, RoomNodeType* y){
     if(x->ConnectedRooms->head==NULL){
-        x->ConnectedRooms->head = y;
-        x->ConnectedRooms->tail = y;
+        x->ConnectedRooms->head = y->room->name;
+        x->ConnectedRooms->tail = y->room->name;
     }else{
-        x->ConnectedRooms->tail->next = y;
-        x->ConnectedRooms->tail = y;
+        x->ConnectedRooms->tail->next = y->room->name;
+        x->ConnectedRooms->tail = y->room->name;
     }
 }
 
@@ -152,18 +152,18 @@ void populateRooms(BuildingType* building) {
 
     // Now connect the rooms. It is possible you do not need a separate
     // function for this, but it is provided to give you a starting point.
-    connectRooms(van, hallway_node);
-    connectRooms(hallway, master_bedroom_node);
-    connectRooms(hallway, boys_bedroom_node);
-    connectRooms(hallway, bathroom_node);
-    connectRooms(hallway, kitchen_node);
-    connectRooms(hallway, basement_node);
-    connectRooms(basement, basement_hallway_node);
-    connectRooms(basement_hallway, right_storage_room_node);
-    connectRooms(basement_hallway, left_storage_room_node);
-    connectRooms(kitchen, living_room_node);
-    connectRooms(kitchen, garage_node);
-    connectRooms(garage, utility_room_node);
+    connectRooms(van, hallway);
+    connectRooms(hallway, master_bedroom);
+    connectRooms(hallway, boys_bedroom);
+    connectRooms(hallway, bathroom);
+    connectRooms(hallway, kitchen);
+    connectRooms(hallway, basement);
+    connectRooms(basement, basement_hallway);
+    connectRooms(basement_hallway, right_storage_room);
+    connectRooms(basement_hallway, left_storage_room);
+    connectRooms(kitchen, living_room);
+    connectRooms(kitchen, garage);
+    connectRooms(garage, utility_room);
 }
 
 /*=======================================================================================================
