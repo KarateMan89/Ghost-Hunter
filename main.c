@@ -9,20 +9,23 @@ int main(int argc, char *argv[])
     BuildingType building;
     initBuilding(&building);
     populateRooms(&building);
-    printrooms(&building.MasterRooms);
+    printRooms(&building.MasterRooms);
 
     return 0;
 }
-void printrooms(RoomLinkedList* b){
-    RoomNodeType *u =b->head; 
-    while(u !=NULL){
-    printf("-------------------%s----------------\n",u->room->name);
-    printconnected(u->room->ConnectedRooms);
-    u=u->next;
-}}
-void printconnected(RoomLinkedList* b){
-    RoomNodeType *u =b->head; 
-    while(u !=NULL){printf("%s\n",u->room->name);u=u->next;
+void printRooms(RoomLinkedList* roomList){
+    RoomNodeType *curr = roomList->head; 
+    while(curr !=NULL){
+        printf("-------------------%s----------------\n", curr->room->name);
+        printConnected(curr->room->connectedRooms);
+        curr = curr->next;
+    }
+}
+void printConnected(RoomLinkedList* roomList){
+    RoomNodeType* curr = roomList->head; 
+    while(curr !=NULL){
+        printf("%s\n",curr->room->name);
+        curr = curr->next;
     }
 }
 
@@ -65,34 +68,41 @@ void appendRoom(RoomLinkedList* list, RoomNodeType* new){
     if(list->head == NULL){
         list->head = new;
         list->tail = new;
-  } else {
+    } else {
         list->tail->next = new;
         list->tail = new;
-  }
+    }
 }
 
 void connectRooms(RoomType *x, RoomType* y){
     RoomNodeType* new = calloc(1,sizeof(RoomNodeType));
-    
-    
     new->room = y;
-    if(x->ConnectedRooms->head==NULL){
-        x->ConnectedRooms->head = new;
-        x->ConnectedRooms->tail = new;
-        if(y->ConnectedRooms->head ==NULL){
+
+    // only connects the VAN to the HALLWAY
+    if(x->connectedRooms->head==NULL){
+        x->connectedRooms->head = new;
+        if(y->connectedRooms->head ==NULL){
             RoomNodeType* newa = calloc(1,sizeof(RoomNodeType));
             newa->room = x;
-            y->ConnectedRooms->head=newa;
-            y->ConnectedRooms->tail=newa;
+            y->connectedRooms->head=newa;
         }
-    }else{
-        x->ConnectedRooms->tail->next = new;
-        x->ConnectedRooms->tail = new;
-        if(y->ConnectedRooms->head ==NULL){
+    // when adding the first room to a room other than the VAN
+    } else if (x->connectedRooms->tail == NULL){
+        x->connectedRooms->head->next = new;
+        x->connectedRooms->tail = new;
+        if(y->connectedRooms->head ==NULL){
             RoomNodeType* newa = calloc(1,sizeof(RoomNodeType));
             newa->room = x;
-            y->ConnectedRooms->head=newa;
-            y->ConnectedRooms->tail=newa;
+            y->connectedRooms->head=newa;
+        }
+    // when adding to the tail
+    } else {
+        x->connectedRooms->tail->next = new;
+        x->connectedRooms->tail = new;
+        if(y->connectedRooms->head ==NULL){
+            RoomNodeType* newa = calloc(1,sizeof(RoomNodeType));
+            newa->room = x;
+            y->connectedRooms->head=newa;
         }
     }
 }
@@ -156,8 +166,7 @@ void populateRooms(BuildingType* building) {
     utility_room_node->room = utility_room;
 
     // Building->MasterRooms might be a linked list structre, or maybe just a node.
-    initRoomList(&building->MasterRooms);
-
+    // initRoomList(&building->MasterRooms);
     appendRoom(&building->MasterRooms, van_node);
     appendRoom(&building->MasterRooms, hallway_node);
     appendRoom(&building->MasterRooms, master_bedroom_node);
@@ -192,7 +201,7 @@ void populateRooms(BuildingType* building) {
                                              ROOM.C
 =======================================================================================================*/
 // initRoom(boys_bedroom, "Boy's Bedroom");
-initRoomList(RoomLinkedList* roomList){
+void initRoomList(RoomLinkedList* roomList){
     roomList->head = NULL;
     roomList->tail = NULL;
 }
@@ -200,7 +209,9 @@ void initRoom(RoomType *room,char* name){
     strcpy(room->name, name);
 
     RoomLinkedList* roomList = (RoomLinkedList*) calloc (1, sizeof(RoomLinkedList));
-    room->ConnectedRooms = roomList;
+    room->connectedRooms = roomList;
+    room->connectedRooms->head = NULL;
+    room->connectedRooms->tail = NULL;
 
     // EvidenceLinkedList* eList = (EvidenceLinkedList*) calloc (1, sizeof(EvidenceLinkedList));
     // room->evidence = eList;

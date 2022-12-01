@@ -22,11 +22,9 @@
 typedef enum { EMF, TEMPERATURE, FINGERPRINTS, SOUND } EvidenceClassType;
 typedef enum { POLTERGEIST, BANSHEE, BULLIES, PHANTOM } GhostClassType;
 
-
-//==ROOMS
 typedef struct {
   	char name[MAX_STR];
-	struct RoomList* ConnectedRooms;
+	struct RoomList* connectedRooms;
 	// EvidenceLinkedList* evidence;
 	// HunterType* currHunters[MAX_HUNTERS];
 	// struct GhostType* ghost;
@@ -42,15 +40,18 @@ typedef struct RoomList{
 	RoomNodeType* tail;
 } RoomLinkedList;
 
-
-
 typedef struct Building {
 	//  GhostType theGhost; // statically allocated
 	 RoomLinkedList MasterRooms; // contains head and tail of all rooms
 	//  HunterType hunters[MAX_HUNTERS];
 } BuildingType;
 
-
+void initBuilding(BuildingType* building);
+void populateRooms(BuildingType* building);
+void initRoomList(RoomLinkedList* rooms);
+void initRoom(RoomType* room, char* name);
+void printRooms(RoomLinkedList* building);
+void printConnected(RoomLinkedList* roomList);
 
 
 
