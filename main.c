@@ -5,18 +5,30 @@ int main(int argc, char *argv[])
     // Initialize a random seed for the random number generators
     srand(time(NULL));
 
-    // You may change this code; this is for demonstration purposes
     BuildingType building;
     initBuilding(&building);
     populateRooms(&building);
     printRooms(&building.MasterRooms);
+    loadGhost(&building);
+
+    moveGhost(building.theGhost);
+    moveGhost(building.theGhost);
+    moveGhost(building.theGhost);
+    for (int i = 0; i < 10;i++){
+        addGhostEvidence(building.theGhost);}
+    moveGhost(building.theGhost);
+    moveGhost(building.theGhost);
+    moveGhost(building.theGhost);
+
+
 
     return 0;
 }
+
 void printRooms(RoomLinkedList* roomList){
     RoomNodeType *curr = roomList->head; 
     while(curr !=NULL){
-        printf("-------------------%s----------------\n", curr->room->name);
+        printf("-------------------%s----SIZE:%d------------\n", curr->room->name, curr->room->connectedRooms->size);
         printConnected(curr->room->connectedRooms);
         curr = curr->next;
     }
@@ -59,8 +71,6 @@ float randFloat(float a, float b) {
                                              BUILDING.C
 =======================================================================================================*/
 void initBuilding(BuildingType* building){
-    // GhostType* ghost = (GhostType*) calloc(1,sizeof(GhostType));
-    // building->theGhost = ghost;
     initRoomList(&building->MasterRooms);
 }
 
@@ -81,28 +91,34 @@ void connectRooms(RoomType *x, RoomType* y){
     // only connects the VAN to the HALLWAY
     if(x->connectedRooms->head==NULL){
         x->connectedRooms->head = new;
+        x->connectedRooms->size++;
         if(y->connectedRooms->head ==NULL){
-            RoomNodeType* newa = calloc(1,sizeof(RoomNodeType));
-            newa->room = x;
-            y->connectedRooms->head=newa;
+            RoomNodeType* previousRoom = calloc(1,sizeof(RoomNodeType));
+            previousRoom->room = x;
+            y->connectedRooms->head=previousRoom;
+            y->connectedRooms->size++;
         }
     // when adding the first room to a room other than the VAN
     } else if (x->connectedRooms->tail == NULL){
         x->connectedRooms->head->next = new;
         x->connectedRooms->tail = new;
+        x->connectedRooms->size++;
         if(y->connectedRooms->head ==NULL){
-            RoomNodeType* newa = calloc(1,sizeof(RoomNodeType));
-            newa->room = x;
-            y->connectedRooms->head=newa;
+            RoomNodeType* previousRoom = calloc(1,sizeof(RoomNodeType));
+            previousRoom->room = x;
+            y->connectedRooms->head=previousRoom;
+            y->connectedRooms->size++;
         }
     // when adding to the tail
     } else {
         x->connectedRooms->tail->next = new;
         x->connectedRooms->tail = new;
+        x->connectedRooms->size++;
         if(y->connectedRooms->head ==NULL){
-            RoomNodeType* newa = calloc(1,sizeof(RoomNodeType));
-            newa->room = x;
-            y->connectedRooms->head=newa;
+            RoomNodeType* previousRoom = calloc(1,sizeof(RoomNodeType));
+            previousRoom->room = x;
+            y->connectedRooms->head=previousRoom;
+            y->connectedRooms->size++;
         }
     }
 }
@@ -197,6 +213,25 @@ void populateRooms(BuildingType* building) {
     connectRooms(garage, utility_room);
 }
 
+void loadGhost(BuildingType* building){
+    GhostType* ghost;
+    int randomGhostType = randInt(0,4);
+    int randomRoom = randInt(0,12);
+
+    //chooose a random room for the ghost to start
+    int counter = 0;
+    RoomNodeType* curr = (&building->MasterRooms)->head->next;
+    while(curr->next !=NULL && counter != randomRoom){
+        curr = curr->next;
+        counter++;
+    }
+    RoomType* rD = curr->room;
+    
+    //create the ghost
+    initGhost(&ghost, randomGhostType, rD, EVIDENCE_ID);
+    building->theGhost = ghost;
+}
+
 /*=======================================================================================================
                                              ROOM.C
 =======================================================================================================*/
@@ -204,6 +239,7 @@ void populateRooms(BuildingType* building) {
 void initRoomList(RoomLinkedList* roomList){
     roomList->head = NULL;
     roomList->tail = NULL;
+    roomList->size = 0;
 }
 void initRoom(RoomType *room,char* name){
     strcpy(room->name, name);
@@ -213,11 +249,177 @@ void initRoom(RoomType *room,char* name){
     room->connectedRooms->head = NULL;
     room->connectedRooms->tail = NULL;
 
-    // EvidenceLinkedList* eList = (EvidenceLinkedList*) calloc (1, sizeof(EvidenceLinkedList));
-    // room->evidence = eList;
+    EvidenceLinkedList* eList = (EvidenceLinkedList*) calloc (1, sizeof(EvidenceLinkedList));
+    room->evidence = eList;
+    room->evidence->head = NULL;
 
     // made this a double pointer because we want to store a pointer to a pointer of
     // the actual ghost, we dont want to allocate new memory to store a new GhostType structure
     // GhostType** noGhost = (GhostType**) calloc(1,sizeof(GhostType*));
     // room->ghost = noGhost;
+}
+
+/*=======================================================================================================
+                                             GHOST.C
+=======================================================================================================*/
+void initGhost(GhostType** ghost, GhostClassType randomGhost, RoomType* startRoom, int id){
+    *ghost = (GhostType*) calloc (1,sizeof(GhostType));
+    (*ghost)->ghostType = randomGhost;
+    (*ghost)->currRoom = startRoom;
+    (*ghost)->boredom = BOREDOM_MAX;
+    (*ghost)->evidenceID = EVIDENCE_ID;
+}
+
+void addEvidence(EvidenceLinkedList* roomEvidenceList, EvidenceType* newEvidence){
+    EvidenceNodeType* newEvidenceNode = (EvidenceNodeType*) calloc (1,sizeof(EvidenceNodeType));
+    newEvidenceNode->evidence = newEvidence;
+    
+    newEvidenceNode->next = roomEvidenceList->head;
+    roomEvidenceList->head = newEvidenceNode;
+}
+
+void addGhostEvidence(GhostType* theGhost){
+    /*
+        calaute type of evidence
+        calc valuse of evidence
+    */
+    int type = randInt(0, 2);
+    int value;
+    switch (theGhost->ghostType)
+    {
+    case 0: //Leaves ghostly EMF, TEMPERATURE, and FINGERPRINTS
+        switch (type)
+        {
+        case 0: //EMF
+            value = randFloat(4.70, 5.00);
+            if(value<4.90){
+                return;
+            }
+            break;
+        case 1: //TEMP
+            value = randFloat(-10.00, 1.00);
+            if(value>0.00){
+                return;
+            }
+            break;
+        case 2: //FINGER
+            value = randInt(0, 1);
+            if(value == 0){
+                return ;
+            }
+            break;
+        }
+        break;
+    case 1: //Leaves ghostly EMF, TEMPERATURE, and SOUND
+        switch (type)
+        {
+        case 0: //EMF
+            value = randFloat(4.70, 5.00);
+            if(value<4.90){
+                return;
+            }
+            break;
+        case 1: //TEMP
+            value = randFloat(-10.00, 1.00);
+            if(value>0.00){
+                return;
+            }
+            break;
+        case 2: //SOUND
+            value = randFloat(65.00, 75.00);
+            if(value<70.00){
+                return;
+            }
+            break;
+        }
+        break;
+    case 2: //Leaves ghostly EMF, FINGERPRINTS, and SOUND
+        switch (type)
+        {
+        case 0: //EMF
+            value = randFloat(4.70, 5.00);
+            if(value<4.90){
+                return;
+            }
+            break;
+        case 1: //FINGER
+            value = randInt(0, 1);
+            if(value == 0){
+                return ;
+            }
+            break;
+        case 2: //SOUND
+            value = randFloat(65.00, 75.00);
+            if(value<70.00){
+                return;
+            }
+            break;
+        }
+        break;
+    case 3: //Leaves ghostly TEMPERATURE, FINGERPRINTS, and SOUND
+        switch (type)
+        {
+        case 0: //TEMP
+            value = randFloat(-10.00, 1.00);
+            if(value>0.00){
+                return;
+            }
+            break;
+        case 1: //FINGER
+            value = randInt(0, 1);
+            if(value == 0){
+                return;
+            }
+            break;
+        case 2: //SOUND
+            value = randFloat(65.00, 75.00);
+            if(value<70.00){
+                return;
+            }
+            break;
+        }
+        break;
+    }
+    
+    //initializes EvidenceType and Adds to the back of the room LinkedListEvidence
+    EvidenceType* newEvidence;
+    initEvidence(theGhost->evidenceID, type, value, &newEvidence);
+    theGhost->evidenceID ++;
+    addEvidence(theGhost->currRoom->evidence, newEvidence);
+}
+
+void moveGhost(GhostType* theGhost){
+    int size = theGhost->currRoom->connectedRooms->size;
+    int rand;
+    if(size==1){
+        rand = 0;
+    }else{
+        rand = randInt(0,size-1);
+    }
+    RoomNodeType* curr = theGhost->currRoom->connectedRooms->head;
+
+    int counter = 0;
+    while(curr != NULL && rand != counter){
+        curr = curr->next;
+        counter++;
+    }
+
+    theGhost->currRoom = curr->room;
+}
+
+
+/*=======================================================================================================
+                                             HUNTERS.C
+=======================================================================================================*/
+
+
+/*=======================================================================================================
+                                             EVIDENCE.C
+=======================================================================================================*/
+
+void initEvidence(int id, EvidenceClassType device, float value, EvidenceType** newEvidence){
+    *newEvidence = (EvidenceType*) calloc (1,sizeof(EvidenceType));
+    (*newEvidence)->id = id;
+    (*newEvidence)->evidenceType = device;
+    (*newEvidence)->value = value;
 }

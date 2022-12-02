@@ -9,12 +9,7 @@
   "C_Cpp_Runner.warnings": [
     "-Wall",
     "-Wextra",
-    "-Wpedantic",
-    "-Wshadow",
-    "-Wformat=2",
-    "-Wconversion",
-    "-Wnull-dereference",
-    "-Wsign-conversion"
+    "-Wpedantic"
   ],
   "C_Cpp_Runner.enableWarnings": true,
   "C_Cpp_Runner.warningsAsError": false,
@@ -34,7 +29,8 @@
     "**/.vscode/**"
   ],
   "files.associations": {
-    "compare": "c",
-    "type_traits": "c"
-  }
+    "stdio.h": "c",
+    "typeinfo": "c"
+  },
+  "git.ignoreLimitWarning": true
 }

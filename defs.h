@@ -23,11 +23,26 @@ typedef enum { EMF, TEMPERATURE, FINGERPRINTS, SOUND } EvidenceClassType;
 typedef enum { POLTERGEIST, BANSHEE, BULLIES, PHANTOM } GhostClassType;
 
 typedef struct {
+	int id;
+	EvidenceClassType evidenceType;
+	float value;
+} EvidenceType;
+
+typedef struct EvidenceNode{
+  EvidenceType* evidence;
+  struct EvidenceNode* next;
+} EvidenceNodeType;
+
+typedef struct EvidenceList{
+	EvidenceNodeType* head;
+} EvidenceLinkedList;
+
+typedef struct {
   	char name[MAX_STR];
 	struct RoomList* connectedRooms;
-	// EvidenceLinkedList* evidence;
-	// HunterType* currHunters[MAX_HUNTERS];
-	// struct GhostType* ghost;
+	EvidenceLinkedList* evidence;
+	struct Hunter* currHunters[MAX_HUNTERS];
+	struct Ghost* ghost;
 } RoomType;
 
 typedef struct RoomNode{
@@ -38,12 +53,29 @@ typedef struct RoomNode{
 typedef struct RoomList{
 	RoomNodeType* head;
 	RoomNodeType* tail;
+	int size;
 } RoomLinkedList;
 
+typedef struct Ghost{
+	GhostClassType ghostType;
+	RoomType* currRoom;
+	int boredom;
+	int evidenceID;
+} GhostType;
+
+typedef struct Hunter{
+	char name[MAX_STR];
+	int fear;
+	int boredom;
+	RoomType* currRoom;
+	EvidenceClassType device;
+	EvidenceLinkedList* notebook;
+} HunterType;
+
 typedef struct Building {
-	//  GhostType theGhost; // statically allocated
-	 RoomLinkedList MasterRooms; // contains head and tail of all rooms
-	//  HunterType hunters[MAX_HUNTERS];
+	 GhostType* theGhost;
+	 RoomLinkedList MasterRooms; 
+	 HunterType hunters[MAX_HUNTERS];
 } BuildingType;
 
 void initBuilding(BuildingType* building);
@@ -52,57 +84,12 @@ void initRoomList(RoomLinkedList* rooms);
 void initRoom(RoomType* room, char* name);
 void printRooms(RoomLinkedList* building);
 void printConnected(RoomLinkedList* roomList);
-
-
-
-/*
-typedef struct {
-	int id;
-	EvidenceClassType evidenceType;
-	float value;
-} EvidenceType;
-
-typedef struct EvidenceNode{
-  EvidenceType* data;
-  struct EvidenceNode* next;
-} EvidenceNodeType;
-
-typedef struct EvidenceList{
-	EvidenceNodeType* head;
-	EvidenceNodeType* tail;
-} EvidenceLinkedList;
-
-//==Ghost
-typedef struct {
-  EvidenceType *elements;
-  int capacity;
-  int size;
-} NotebookType;
-//==Hunter
-typedef struct Hunter{
-	char name[MAX_STR];
-	int fear;
-	int boredom;
-	struct RoomType* currRoom;
-	EvidenceClassType device;
-	NotebookType* notebookList;
-} HunterType;
-
-typedef struct {
-	GhostClassType ghostType;
-	RoomType* currRoom;
-	int boredom;
-} GhostType;
-*/
-
-
-
-
-
+void initEvidence(int id, EvidenceClassType device, float value, EvidenceType** newEvidence);
+void initGhost(GhostType** ghost, GhostClassType randomGhost, RoomType* startRoom, int id);
+void loadGhost(BuildingType* building);
 
 
 
 int randInt(int, int);          // Generates a pseudorandom integer between the parameters
 float randFloat(float, float);  // Generates a pseudorandom float between the parameters
-
 void populateRooms(BuildingType*);   // Populates the building with sample data for rooms
