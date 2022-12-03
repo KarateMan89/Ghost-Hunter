@@ -21,6 +21,19 @@
 // You may rename these types if you wish
 typedef enum { EMF, TEMPERATURE, FINGERPRINTS, SOUND } EvidenceClassType;
 typedef enum { POLTERGEIST, BANSHEE, BULLIES, PHANTOM } GhostClassType;
+char* devices[] = {
+  [EMF] = "EMF",
+  [TEMPERATURE] = "TEMPERATURE",
+  [FINGERPRINTS] = "FINGERPRITNS",
+  [SOUND] = "SOUND"
+};
+char* ghostNames[] = {
+  [POLTERGEIST] = "POLTERGEIST",
+  [BANSHEE] = "BANSHEE",
+  [BULLIES] = "BULLIES",
+  [PHANTOM] = "PHANTOM",
+};
+
 
 typedef struct {
 	int id;
@@ -75,7 +88,7 @@ typedef struct Hunter{
 typedef struct Building {
 	 GhostType* theGhost;
 	 RoomLinkedList MasterRooms; 
-	 HunterType hunters[MAX_HUNTERS];
+	 HunterType* hunters[MAX_HUNTERS];
 } BuildingType;
 
 void initBuilding(BuildingType* building);
@@ -87,6 +100,12 @@ void printConnected(RoomLinkedList* roomList);
 void initEvidence(int id, EvidenceClassType device, float value, EvidenceType** newEvidence);
 void initGhost(GhostType** ghost, GhostClassType randomGhost, RoomType* startRoom, int id);
 void loadGhost(BuildingType* building);
+void moveGhost(GhostType* theGhost);
+void addEvidence(EvidenceLinkedList* roomEvidenceList, EvidenceType* newEvidence);
+void printRoomEvidence(EvidenceLinkedList* roomEvidence);
+void addGhostEvidence(GhostType* theGhost);
+
+
 
 
 
