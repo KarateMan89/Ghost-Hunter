@@ -1,5 +1,7 @@
 #include "defs.h"
-// implement hunter boredom this is a tesedt
+// implement hunter boredom
+// implement hunter decisions (move, collect evidence, share)
+// implement ghost decision (move , drop, do nothing) if in the same room with a hunter it cannot move
 int main(int argc, char *argv[])
 {
     // Initialize a random seed for the random number generators
