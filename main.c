@@ -1,26 +1,28 @@
 #include "defs.h"
-// implement hunter boredom
-/*
-loses boredom when finding standard evidence(complete)
-loses when moving(complete)
-loses when comparing evidence(complete)
-resets when finds ghostly(complete)
-resets when in same room as ghost.(complete)
-*/
 
-// implement hunter decisions (move, collect evidence, share)
 /*
+TO DO
+//implement hunter boredom
+//loses boredom when finding standard evidence(complete)
+//loses when moving(complete)
+//loses when comparing evidence(complete)
+//resets when finds ghostly(complete)
+//resets when in same room as ghost.(complete)
+
+
+implement hunter decisions (move, collect evidence, share)
 check to see if there are other hunters in the same room
 make choice based on if alone or with others
-if alone options 1-2
+//if alone options 1-2
 if with others options 1-3
-*/
 
-// implement ghost decision (move , drop, do nothing) if in the same room with a hunter it cannot move
-/*
-make decision based on if the ghost is alone or not
-if alone options 1-3
-if with hunter options 1-2
+we need a way to choose a random hunter in the same room to compare evidence with.
+
+
+//implement ghost decision (move , drop, do nothing) if in the same room with a hunter it cannot move
+//make decision based on if the ghost is alone or not
+//if alone options 1-3
+//if with hunter options 1-2
 */
 int main(int argc, char *argv[])
 {
@@ -511,14 +513,7 @@ void addGhostEvidence(GhostType *theGhost)
 
 void decreaseGhostBoredom(GhostType *theGhost)
 {
-    int alone = 1;
-    for (int i = 0; i < 4; i++)
-    {
-        if (theGhost->currRoom->currHunters[i] != NULL)
-        {
-            alone = 0;
-        }
-    }
+    int alone = ghostAlone(theGhost);
     if (alone == 0)
     {
         theGhost->boredom = BOREDOM_MAX;
@@ -527,6 +522,18 @@ void decreaseGhostBoredom(GhostType *theGhost)
     {
         theGhost->boredom--;
     }
+}
+
+int ghostAlone(GhostType *theGhost)
+{
+    for (int i = 0; i < 4; i++)
+    {
+        if (theGhost->currRoom->currHunters[i] != NULL)
+        {
+            return 1;
+        }
+    }
+    return 0;
 }
 
 void moveGhost(GhostType *theGhost)
@@ -554,19 +561,45 @@ void moveGhost(GhostType *theGhost)
     theGhost->currRoom->ghost = theGhost;
 }
 
-void hunterNear(GhostType *theGhost)
+void ghostControl(GhostType *theGhost)
 {
+    /*
+    //0 do nothing
+    //1 leave evidence
+    //2 move
+    */
+
+    int choice;
+    int alone = ghostAlone(theGhost);
+    if (alone == 1)
+    {
+        choice = randInt(0, 2);
+    }
+    else
+    {
+        choice = randInt(0, 3);
+    }
+    if (choice == 1)
+    {
+        addGhostEvidence(theGhost);
+    }
+    else if (choice == 2)
+    {
+        moveGhost(theGhost);
+    }
 }
+
 /*=======================================================================================================
                                              HUNTERS.C
 =======================================================================================================*/
-void initHunter(char *name, int fear, int boredom, RoomType *currRoom, EvidenceClassType device, EvidenceLinkedList **notebook, HunterType **hunter)
+void initHunter(char *name, int fear, int boredom, RoomType *currRoom, EvidenceClassType device, EvidenceLinkedList **notebook, HunterType **hunter, int id)
 {
     *notebook = (EvidenceLinkedList *)calloc(1, sizeof(EvidenceLinkedList));
     (*notebook)->head = NULL;
 
     *hunter = (HunterType *)calloc(1, sizeof(HunterType));
 
+    (*hunter)->id = id;
     strcpy((*hunter)->name, name);
     (*hunter)->boredom = boredom;
     (*hunter)->currRoom = currRoom;
@@ -589,8 +622,9 @@ void increaseHunterFear(HunterType *theHunter)
     theHunter->fear++;
 }
 
-void hunterNear(HunterType *theHunter)
+int hunterNear(HunterType *theHunter)
 {
+    return 0;
 }
 
 void ghostNear(HunterType *theHunter, GhostType *theGhost)
@@ -616,7 +650,7 @@ void loadHunnters(BuildingType *building)
         HunterType *hunter;
         char name[MAX_STR] = {0};
         enterName(name, counter + 1);
-        initHunter(name, FEAR_RATE, BOREDOM_MAX, building->MasterRooms.head->room, counter, &notebook, &hunter);
+        initHunter(name, FEAR_RATE, BOREDOM_MAX, building->MasterRooms.head->room, counter, &notebook, &hunter, counter);
         building->MasterRooms.head->room->currHunters[counter] = hunter;
         building->hunters[counter] = hunter;
         counter++;
@@ -874,6 +908,38 @@ void compareEvidence(HunterType *hunterSending, HunterType *hunterReceiving)
     else
     {
         printf("Hunter: %s has no evidence to share with %s.\n", hunterSending->name, hunterReceiving->name);
+    }
+}
+
+void hunterControle(HunterType *theHunter)
+{
+
+    /*
+    0 is move
+    1 is look for evidence
+    2 is compare evidence
+    */
+    int choice;
+    int alone = hunterNear(theHunter);
+    if (alone == 1)
+    {
+        choice = randInt(0, 2);
+    }
+    else
+    {
+        choice = randInt(0, 3);
+    }
+    if (choice == 0)
+    {
+        moveHunter(theHunter, theHunter->id);
+    }
+    else if (choice == 1)
+    {
+        checkRoomEvidence(theHunter);
+    }
+    else if (choice == 2)
+    {
+        // compareEvidence();
     }
 }
 
