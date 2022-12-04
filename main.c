@@ -1,7 +1,27 @@
 #include "defs.h"
 // implement hunter boredom
+/*
+loses boredom when finding standard evidence(complete)
+loses when moving(complete)
+loses when comparing evidence(complete)
+resets when finds ghostly(complete)
+resets when in same room as ghost.(complete)
+*/
+
 // implement hunter decisions (move, collect evidence, share)
+/*
+check to see if there are other hunters in the same room
+make choice based on if alone or with others
+if alone options 1-2
+if with others options 1-3
+*/
+
 // implement ghost decision (move , drop, do nothing) if in the same room with a hunter it cannot move
+/*
+make decision based on if the ghost is alone or not
+if alone options 1-3
+if with hunter options 1-2
+*/
 int main(int argc, char *argv[])
 {
     // Initialize a random seed for the random number generators
@@ -295,6 +315,7 @@ void printConnected(RoomLinkedList *roomList)
         curr = curr->next;
     }
 }
+
 /*=======================================================================================================
                                              GHOST.C
 =======================================================================================================*/
@@ -533,6 +554,9 @@ void moveGhost(GhostType *theGhost)
     theGhost->currRoom->ghost = theGhost;
 }
 
+void hunterNear(GhostType *theGhost)
+{
+}
 /*=======================================================================================================
                                              HUNTERS.C
 =======================================================================================================*/
@@ -563,6 +587,18 @@ void resetHunterBoredom(HunterType *theHunter)
 void increaseHunterFear(HunterType *theHunter)
 {
     theHunter->fear++;
+}
+
+void hunterNear(HunterType *theHunter)
+{
+}
+
+void ghostNear(HunterType *theHunter, GhostType *theGhost)
+{
+    if (theHunter->currRoom->name == theGhost->currRoom->name)
+    {
+        resetHunterBoredom(theHunter);
+    }
 }
 
 void loadHunnters(BuildingType *building)
@@ -602,6 +638,7 @@ void enterName(char *name, int x)
 
 void moveHunter(HunterType *theHunter, int x)
 {
+    decreaseHunterBoredom(theHunter);
     int size = theHunter->currRoom->connectedRooms->size;
     int rand;
     if (size == 1)
@@ -729,6 +766,7 @@ void checkRoomEvidence(HunterType *theHunter)
     if (curr == NULL)
     {
         StandardEvidencePrint(1);
+        decreaseHunterBoredom(theHunter);
     }
     else
     {
@@ -758,6 +796,11 @@ void checkRoomEvidence(HunterType *theHunter)
         if (found == 0)
         {
             StandardEvidencePrint(1);
+            decreaseHunterBoredom(theHunter);
+        }
+        else
+        {
+            resetHunterBoredom(theHunter);
         }
     }
 }
@@ -805,6 +848,7 @@ void copyEvidence(EvidenceNodeType *evidenceNode, EvidenceLinkedList *hunterR)
 
 void compareEvidence(HunterType *hunterSending, HunterType *hunterReceiving)
 {
+    decreaseHunterBoredom(hunterSending);
     EvidenceNodeType *hsCurr = hunterSending->notebook->head;
     EvidenceNodeType *hrCurr = hunterReceiving->notebook->head;
     int shared = 0;
