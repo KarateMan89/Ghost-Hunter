@@ -597,6 +597,7 @@ void ghostNear(HunterType *theHunter, GhostType *theGhost)
 {
     if (theHunter->currRoom->name == theGhost->currRoom->name)
     {
+        increaseHunterFear(theHunter);
         resetHunterBoredom(theHunter);
     }
 }
