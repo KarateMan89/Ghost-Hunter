@@ -1,47 +1,131 @@
 #include "defs.h"
-// implement hunter boredom
-// implement hunter decisions (move, collect evidence, share)
-// implement ghost decision (move , drop, do nothing) if in the same room with a hunter it cannot move
+
+/*
+TO DO
+//implement hunter boredom
+//loses boredom when finding standard evidence(complete)
+//loses when moving(complete)
+//loses when comparing evidence(complete)
+//resets when finds ghostly(complete)
+//resets when in same room as ghost.(complete)
+
+
+implement hunter decisions (move, collect evidence, share)
+check to see if there are other hunters in the same room
+make choice based on if alone or with others
+//if alone options 1-2
+if with others options 1-3
+
+we need a way to choose a random hunter in the same room to compare evidence with.(complete)
+
+
+//implement ghost decision (move , drop, do nothing) if in the same room with a hunter it cannot move
+//make decision based on if the ghost is alone or not
+//if alone options 1-3
+//if with hunter options 1-2
+*/
 int main(int argc, char *argv[])
 {
+/*
++++++++++++++++++++++++++MAIN CONTROL FLOW+++++++++++++++++++++++++++++++++++++++
+*/
     // Initialize a random seed for the random number generators
     srand(time(NULL));
-
+    //create building
     BuildingType building;
     initBuilding(&building);
+    //create and connect rooms
     populateRooms(&building);
-    printRooms(&building.MasterRooms);
+    //load the ghost
     loadGhost(&building);
+    //load the hunters
     loadHunnters(&building);
-    int counter = 0;
-    while (counter < 4)
-    {
-        printf("Hunter %d: %s\n", counter, building.hunters[counter]);
-        printf("Location: %s\n", building.hunters[counter]->currRoom->name);
-        counter++;
+
+    // create a semaphore
+    sem_t mutex;
+    // create threads for hunters and ghost
+    pthread_t h1, h2, h3, h4, gh;
+
+    if(sem_init(&mutex,0,1) < 0){
+        printf("Semaphore initialization error.");
+        exit(1);
     }
-    moveHunter(building.hunters[1], 1);
-    moveHunter(building.hunters[0], 0);
-    while (building.theGhost->currRoom != building.hunters[0]->currRoom)
-    {
-        moveGhost(building.theGhost);
+
+    GhostType* ghost = building.theGhost;
+    HunterType* hunterOne = building.hunters[0];
+    HunterType* hunterTwo = building.hunters[1];
+    HunterType* hunterThree = building.hunters[2];
+    HunterType* hunterFour = building.hunters[3];
+
+    int huntersGone = 0;
+    int ghostGone = 0;
+    int ghostDiscovered = 0;
+    while(!huntersGone && !ghostGone && !ghostDiscovered){
+
+        pthread_create(&gh, NULL, ghostFoo, ghost);
+        if(building.hunters[0] != NULL)
+            pthread_create(&h1, NULL, hunterFoo, hunterOne);
+        if(building.hunters[1] != NULL)
+            pthread_create(&h2, NULL, hunterFoo, hunterTwo);
+        if(building.hunters[2] != NULL)
+            pthread_create(&h3, NULL, hunterFoo, hunterThree);
+        if(building.hunters[3] != NULL)
+            pthread_create(&h4, NULL, hunterFoo, hunterFour);
+
+        pthread_join(gh,NULL);
+        pthread_join(h1,NULL);
+        pthread_join(h2,NULL);
+        pthread_join(h3,NULL);
+        pthread_join(h4,NULL);
+
+        if(1) huntersGone = 1;
+        if(1) ghostGone = 1;
+        if(1) ghostDiscovered = 1;
+        Sleep(1.5);
     }
-    printf("Hunter %d: %s\n", 1, building.hunters[0]);
-    printf("Location: %s\n", building.hunters[0]->currRoom->name);
-    EvidenceLinkedList *test = building.MasterRooms.head->next->room->evidence;
-    EvidenceType *adding;
-    for (int i = 0; i < 20; i++)
-    {
-        addGhostEvidence(building.theGhost);
-    }
-    checkRoomEvidence(building.hunters[0]);
-    checkRoomEvidence(building.hunters[1]);
-    compareEvidence(building.hunters[0], building.hunters[1]);
-    compareEvidence(building.hunters[1], building.hunters[0]);
-    printf("Hunter 0:\n");
-    printRoomEvidence(building.hunters[0]->notebook);
-    printf("==================================================\nHunter 1:\n");
-    printRoomEvidence(building.hunters[1]->notebook);
+    
+
+/*
++++++++++++++++++++++++++MAIN CONTROL FLOW END+++++++++++++++++++++++++++++++++++++
+*/
+
+    // srand(time(NULL));
+
+    // BuildingType building;
+    // initBuilding(&building);
+    // populateRooms(&building);
+    // printRooms(&building.MasterRooms);
+    // loadGhost(&building);
+    // loadHunnters(&building);
+    // int counter = 0;
+    // while (counter < 4)
+    // {
+    //     printf("Hunter %d: %s\n", counter, building.hunters[counter]);
+    //     printf("Location: %s\n", building.hunters[counter]->currRoom->name);
+    //     counter++;
+    // }
+    // moveHunter(building.hunters[1], 1);
+    // moveHunter(building.hunters[0], 0);
+    // while (building.theGhost->currRoom != building.hunters[0]->currRoom)
+    // {
+    //     moveGhost(building.theGhost);
+    // }
+    // printf("Hunter %d: %s\n", 1, building.hunters[0]);
+    // printf("Location: %s\n", building.hunters[0]->currRoom->name);
+    // EvidenceLinkedList *test = building.MasterRooms.head->next->room->evidence;
+    // EvidenceType *adding;
+    // for (int i = 0; i < 20; i++)
+    // {
+    //     addGhostEvidence(building.theGhost);
+    // }
+    // checkRoomEvidence(building.hunters[0]);
+    // checkRoomEvidence(building.hunters[1]);
+    // compareEvidence(building.hunters[0], building.hunters[1]);
+    // compareEvidence(building.hunters[1], building.hunters[0]);
+    // printf("Hunter 0:\n");
+    // printRoomEvidence(building.hunters[0]->notebook);
+    // printf("==================================================\nHunter 1:\n");
+    // printRoomEvidence(building.hunters[1]->notebook);
 
     // moveGhost(building.theGhost);
     // moveGhost(building.theGhost);
@@ -53,7 +137,36 @@ int main(int argc, char *argv[])
     // moveGhost(building.theGhost);
     // moveGhost(building.theGhost);
 
+    
     return 0;
+}
+
+void* hunterFoo(void* h){
+    HunterType* hunter = (HunterType*) h;
+    
+    if(sem_wait(&hunter->mutex) < 0){
+        printf("Semaphore wait error.\n");
+        exit(1);
+    }
+    hunterControl(hunter);
+    if(sem_post(&hunter->mutex) < 0){
+        printf("Semaphore wait error.\n");
+        exit(1);
+    }
+}
+
+void* ghostFoo(void* gh){
+    GhostType* ghost = (GhostType*) gh;
+
+    if(sem_wait(&ghost->mutex) < 0){
+        printf("Semaphore wait error.\n");
+        exit(1);
+    }
+    ghostControl(ghost);
+    if(sem_post(&ghost->mutex) < 0){
+        printf("Semaphore wait error.\n");
+        exit(1);
+    }
 }
 
 /*
@@ -83,12 +196,37 @@ float randFloat(float a, float b)
     return random * (b - a) + a;
 }
 
+ void endersGame(BuildingType* building){
+    if(building->theGhost->boredom==0){
+        printf("The ghost has left the building.");
+    }
+    // we need a way to check if a hunter has all the evidence.
+    // array of evidence type if there are 3 types of evidence present they win
+    else{
+        int count = 0;
+        for (int i = 0; i < 4;i++){
+            if(building->hunters[i]==NULL){
+                count++;
+            }
+        }
+        if (count == 4){
+            printf("All the hunters have run away.");
+        } 
+    }
+ }
+
 /*=======================================================================================================
                                              BUILDING.C
 =======================================================================================================*/
 void initBuilding(BuildingType *building)
 {
     initRoomList(&building->MasterRooms);
+    sem_t mutex;
+    if(sem_init(&mutex,0,1) < 0){
+        printf("Semaphore initialization error.");
+        exit(1);
+    }
+    building->mutex = mutex;
 }
 
 void appendRoom(RoomLinkedList *list, RoomNodeType *new)
@@ -155,8 +293,8 @@ void connectRooms(RoomType *x, RoomType *y)
 
 void populateRooms(BuildingType *building)
 {
-    // First, create each room. Perhaps you want to include more data
-    // in the init parameters?
+
+
     RoomType *van = calloc(1, sizeof(RoomType));
     initRoom(van, "Van");
     RoomType *hallway = calloc(1, sizeof(RoomType));
@@ -295,6 +433,7 @@ void printConnected(RoomLinkedList *roomList)
         curr = curr->next;
     }
 }
+
 /*=======================================================================================================
                                              GHOST.C
 =======================================================================================================*/
@@ -327,6 +466,8 @@ void loadGhost(BuildingType *building)
     initGhost(&ghost, randomGhostType, rD, EVIDENCE_ID);
     ghost->currRoom->ghost = ghost;
     building->theGhost = ghost;
+    // reference to mutex in building
+    building->theGhost->mutex = building->mutex;
 }
 
 void StandardEvidencePrint(int x)
@@ -488,16 +629,9 @@ void addGhostEvidence(GhostType *theGhost)
     addEvidence(theGhost->currRoom->evidence, newEvidence);
 }
 
-void decreaseGhostBoredom(GhostType *theGhost)
+void adjustGhostBoredom(GhostType *theGhost)
 {
-    int alone = 1;
-    for (int i = 0; i < 4; i++)
-    {
-        if (theGhost->currRoom->currHunters[i] != NULL)
-        {
-            alone = 0;
-        }
-    }
+    int alone = ghostAlone(theGhost);
     if (alone == 0)
     {
         theGhost->boredom = BOREDOM_MAX;
@@ -506,6 +640,18 @@ void decreaseGhostBoredom(GhostType *theGhost)
     {
         theGhost->boredom--;
     }
+}
+
+int ghostAlone(GhostType *theGhost)
+{
+    for (int i = 0; i < 4; i++)
+    {
+        if (theGhost->currRoom->currHunters[i] != NULL)
+        {
+            return 1;
+        }
+    }
+    return 0;
 }
 
 void moveGhost(GhostType *theGhost)
@@ -533,16 +679,45 @@ void moveGhost(GhostType *theGhost)
     theGhost->currRoom->ghost = theGhost;
 }
 
+void ghostControl(GhostType *theGhost)
+{
+    /*
+    //0 do nothing
+    //1 leave evidence
+    //2 move
+    */
+    int choice;
+    int alone = ghostAlone(theGhost);
+    if (alone == 1)
+    {
+        choice = randInt(0, 2);
+    }
+    else
+    {
+        choice = randInt(0, 3);
+    }
+    if (choice == 1)
+    {
+        addGhostEvidence(theGhost);
+    }
+    else if (choice == 2)
+    {
+        moveGhost(theGhost);
+    }
+    adjustGhostBoredom(theGhost);
+}
+
 /*=======================================================================================================
                                              HUNTERS.C
 =======================================================================================================*/
-void initHunter(char *name, int fear, int boredom, RoomType *currRoom, EvidenceClassType device, EvidenceLinkedList **notebook, HunterType **hunter)
+void initHunter(char *name, int fear, int boredom, RoomType *currRoom, EvidenceClassType device, EvidenceLinkedList **notebook, HunterType **hunter, int id)
 {
     *notebook = (EvidenceLinkedList *)calloc(1, sizeof(EvidenceLinkedList));
     (*notebook)->head = NULL;
 
     *hunter = (HunterType *)calloc(1, sizeof(HunterType));
 
+    (*hunter)->id = id;
     strcpy((*hunter)->name, name);
     (*hunter)->boredom = boredom;
     (*hunter)->currRoom = currRoom;
@@ -565,6 +740,20 @@ void increaseHunterFear(HunterType *theHunter)
     theHunter->fear++;
 }
 
+int hunterNear(HunterType *theHunter)
+{
+    return 0;
+}
+
+void ghostNear(HunterType *theHunter, GhostType *theGhost)
+{
+    if (theHunter->currRoom->name == theGhost->currRoom->name)
+    {
+        increaseHunterFear(theHunter);
+        resetHunterBoredom(theHunter);
+    }
+}
+
 void loadHunnters(BuildingType *building)
 {
     /* do some for loop or while loop
@@ -579,9 +768,10 @@ void loadHunnters(BuildingType *building)
         HunterType *hunter;
         char name[MAX_STR] = {0};
         enterName(name, counter + 1);
-        initHunter(name, FEAR_RATE, BOREDOM_MAX, building->MasterRooms.head->room, counter, &notebook, &hunter);
+        initHunter(name, FEAR_RATE, BOREDOM_MAX, building->MasterRooms.head->room, counter, &notebook, &hunter, counter);
         building->MasterRooms.head->room->currHunters[counter] = hunter;
         building->hunters[counter] = hunter;
+        building->hunters[counter]->mutex = building->mutex;
         counter++;
     }
 }
@@ -602,6 +792,7 @@ void enterName(char *name, int x)
 
 void moveHunter(HunterType *theHunter, int x)
 {
+    decreaseHunterBoredom(theHunter);
     int size = theHunter->currRoom->connectedRooms->size;
     int rand;
     if (size == 1)
@@ -729,6 +920,7 @@ void checkRoomEvidence(HunterType *theHunter)
     if (curr == NULL)
     {
         StandardEvidencePrint(1);
+        decreaseHunterBoredom(theHunter);
     }
     else
     {
@@ -758,6 +950,11 @@ void checkRoomEvidence(HunterType *theHunter)
         if (found == 0)
         {
             StandardEvidencePrint(1);
+            decreaseHunterBoredom(theHunter);
+        }
+        else
+        {
+            resetHunterBoredom(theHunter);
         }
     }
 }
@@ -805,6 +1002,7 @@ void copyEvidence(EvidenceNodeType *evidenceNode, EvidenceLinkedList *hunterR)
 
 void compareEvidence(HunterType *hunterSending, HunterType *hunterReceiving)
 {
+    decreaseHunterBoredom(hunterSending);
     EvidenceNodeType *hsCurr = hunterSending->notebook->head;
     EvidenceNodeType *hrCurr = hunterReceiving->notebook->head;
     int shared = 0;
@@ -831,6 +1029,54 @@ void compareEvidence(HunterType *hunterSending, HunterType *hunterReceiving)
         printf("Hunter: %s has no evidence to share with %s.\n", hunterSending->name, hunterReceiving->name);
     }
 }
+
+void hunterControl(HunterType *theHunter)
+{
+
+    /*
+    0 is move
+    1 is look for evidence
+    2 is compare evidence
+    */
+    int choice;
+    int alone = hunterNear(theHunter);
+    if (alone == 1)
+    {
+        choice = randInt(0, 2);
+    }
+    else
+    {
+        choice = randInt(0, 3);
+    }
+
+    if (choice == 0)
+    {
+        moveHunter(theHunter, theHunter->id);
+    }
+    else if (choice == 1)
+    {
+        checkRoomEvidence(theHunter);
+    }
+    else if (choice == 2)
+    {
+        
+        int counter = randInt(0,4);
+        HunterType* currHunters[MAX_HUNTERS] = theHunter->currRoom->currHunters;
+        while(currHunters[counter] != theHunter || currHunters[counter] != NULL){
+            counter = randInt(0, 4);
+        }
+        compareEvidence(theHunter,currHunters[counter]);
+    }
+}
+
+// void addEvidenceTypes(HunterType* theHunter){
+//     int contains = 0;
+//     for (int i = 0; i < 3;i++){
+//         if(theHunter->types[i]==!NULL&&contains==0){
+//             theHunter->types[i] = theHunter->notebook->head->evidence->evidenceType;
+//         }
+//     } 
+// }
 
 /*=======================================================================================================
                                              EVIDENCE.C
