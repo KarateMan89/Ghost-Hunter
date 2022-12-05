@@ -103,7 +103,6 @@ typedef struct Hunter
 	RoomType *currRoom;
 	EvidenceClassType device;
 	EvidenceLinkedList *notebook;
-	EvidenceClassType *types[3];
 	sem_t mutex;
 } HunterType;
 
@@ -130,6 +129,42 @@ void printRoomEvidence(EvidenceLinkedList *roomEvidence);
 void addGhostEvidence(GhostType *theGhost);
 void* hunterFoo(void* hunter);
 void* ghostFoo(void* ghost);
+void appendRoom(RoomLinkedList *list, RoomNodeType *new);
+void connectRooms(RoomType *x, RoomType *y);
+void cleanBuildingRoomList(RoomLinkedList MasterRooms);
+void cleanBuilding(BuildingType* building);
+void StandardEvidencePrint(int x);
+void addGhostEvidence(GhostType *theGhost);
+int ghostAlone(GhostType *theGhost);
+void ghostControl(GhostType *theGhost);
+void cleanRoomList(RoomType* room);
+void initHunter(char *name, int fear, int boredom, RoomType *currRoom, EvidenceClassType device, EvidenceLinkedList **notebook, HunterType **hunter, int id);
+int enoughEvidence(HunterType* theHunter);
+void hunterscared(HunterType** theHunter);
+void hunterBored(HunterType** theHunter);
+void decreaseHunterBoredom(HunterType *theHunter);
+void resetHunterBoredom(HunterType *theHunter);
+void increaseHunterFear(HunterType *theHunter);
+int hunterNear(HunterType *theHunter);
+void ghostNear(HunterType *theHunter);
+void loadHunnters(BuildingType *building);
+void enterName(char *name, int x);
+void moveHunter(HunterType *theHunter, int x);
+void takeEvidence(EvidenceLinkedList *room, EvidenceLinkedList *hunter, int id);
+void checkRoomEvidence(HunterType *theHunter);
+void copyAllEvidence(EvidenceLinkedList *hunterS, EvidenceLinkedList *hunterR);
+void copyEvidence(EvidenceNodeType *evidenceNode, EvidenceLinkedList *hunterR);
+void compareEvidence(HunterType *hunterSending, HunterType *hunterReceiving);
+void hunterControl(HunterType *theHunter);
+void cleanNotebook(HunterType** hunter);
+void initEvidence(int id, EvidenceClassType device, float value, EvidenceType **newEvidence);
+void addEvidence(EvidenceLinkedList *roomEvidenceList, EvidenceType *newEvidence);
+void printRoomEvidence(EvidenceLinkedList *roomEvidence);
+ int endersGame(BuildingType* building);
+
+
+
+
 
 int randInt(int, int);				// Generates a pseudorandom integer between the parameters
 float randFloat(float, float);		// Generates a pseudorandom float between the parameters

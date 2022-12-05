@@ -10,8 +10,8 @@ multi threading
 */
 int main(int argc, char *argv[])
 { 
-    // srand(time(NULL));
-    srand(2402);
+    srand(time(NULL));
+    // srand(2);
 
     //create building
     BuildingType building;
@@ -41,7 +41,6 @@ int main(int argc, char *argv[])
         // for (int x = 0; x < 102;x++){
         //     increaseHunterFear(building.hunters[0]);
         // }
-
         ghostControl(building.theGhost);
         if(building.hunters[0] != NULL)
             hunterControl(building.hunters[0]);
@@ -56,9 +55,10 @@ int main(int argc, char *argv[])
             break;
         }
     }
-/*
-+++++++++++++++++++++++++MAIN CONTROL FLOW+++++++++++++++++++++++++++++++++++++++
-*/ 
+    cleanBuilding(&building);
+    /*
+    +++++++++++++++++++++++++MAIN CONTROL FLOW+++++++++++++++++++++++++++++++++++++++
+    */ 
     // // Initialize a random seed for the random number generators
     // srand(time(NULL));
     // // srand(3);
@@ -224,13 +224,28 @@ float randFloat(float a, float b)
 
  int endersGame(BuildingType* building){
     if(building->theGhost->boredom == 0){
-        printf("The ghost has left the building.");
+        printf("The ghost got bored and has left the building.\nThe is a tie.");
         return 1;
     }
     // we need a way to check if a hunter has all the evidence.
     // array of evidence type if there are 3 types of evidence present they win
     else{
+
         int count = 0;
+        for (int i = 0; i < 4;i++){
+            if(building->hunters[i]!=NULL){
+                hunterBored(&building->hunters[i]);
+            }
+            if(building->hunters[i]==NULL){
+                count++;
+            }
+        }
+        if (count == 4){
+            printf("All the hunters have left.\nThe ghost wins.");
+            return 1;
+        } 
+
+        count = 0;
         for (int i = 0; i < 4;i++){
             if(building->hunters[i]!=NULL){
                 hunterscared(&building->hunters[i]);
@@ -240,7 +255,7 @@ float randFloat(float a, float b)
             }
         }
         if (count == 4){
-            printf("All the hunters have run away.");
+            printf("All the hunters have left.\nThe ghost wins.");
             return 1;
         } 
     }
@@ -250,6 +265,7 @@ float randFloat(float a, float b)
             enoughE = enoughEvidence(building->hunters[j]);
         }
         if(enoughE == 1){
+            printf("The hunters have collected enough evidence and have won.");
             return 1;
         }
     }
@@ -286,14 +302,17 @@ void appendRoom(RoomLinkedList *list, RoomNodeType *new)
 
 void connectRooms(RoomType *x, RoomType *y)
 {
+    // Allocate memory for a new RoomNodeType structure to link x and y
     RoomNodeType *new = calloc(1, sizeof(RoomNodeType));
     new->room = y;
 
     // only connects the VAN to the HALLWAY
     if (x->connectedRooms->head == NULL)
     {
+        // If the linked list of x is empty, add the new RoomNodeType as the first element
         x->connectedRooms->head = new;
         x->connectedRooms->size++;
+        // If the linked list of y is also empty, add a new RoomNodeType to the linked list of y
         if (y->connectedRooms->head == NULL)
         {
             RoomNodeType *previousRoom = calloc(1, sizeof(RoomNodeType));
@@ -305,9 +324,12 @@ void connectRooms(RoomType *x, RoomType *y)
     }
     else if (x->connectedRooms->tail == NULL)
     {
+        // If the linked list of x is not empty but its tail is NULL,
+        // add the new RoomNodeType as the second element in the linked list of x
         x->connectedRooms->head->next = new;
         x->connectedRooms->tail = new;
         x->connectedRooms->size++;
+        // If the linked list of y is empty, add a new RoomNodeType to the linked list of y
         if (y->connectedRooms->head == NULL)
         {
             RoomNodeType *previousRoom = calloc(1, sizeof(RoomNodeType));
@@ -319,9 +341,12 @@ void connectRooms(RoomType *x, RoomType *y)
     }
     else
     {
+        // If the linked list of x is not empty and its tail is not NULL,
+        // add the new RoomNodeType to the end of the linked list of x
         x->connectedRooms->tail->next = new;
         x->connectedRooms->tail = new;
         x->connectedRooms->size++;
+        // If the linked list of y is empty, add a new RoomNodeType to the linked list of y
         if (y->connectedRooms->head == NULL)
         {
             RoomNodeType *previousRoom = calloc(1, sizeof(RoomNodeType));
@@ -423,6 +448,32 @@ void populateRooms(BuildingType *building)
     connectRooms(garage, utility_room);
 }
 
+void cleanBuildingRoomList(RoomLinkedList MasterRooms){
+    RoomNodeType *curr = MasterRooms.head;
+    RoomNodeType *nextRoom = NULL;
+    while (curr != NULL){
+        nextRoom = curr->next;
+        cleanRoomList(curr->room);
+        free(curr->room);
+        free(curr);
+        curr = nextRoom;
+    }
+    
+}
+
+void cleanBuilding(BuildingType* building){
+    for (int i = 0; i < 4; i++){
+        if(building->hunters[i] != NULL){
+            cleanNotebook(&(building->hunters[i]));
+            free(building->hunters[i]);
+        }
+        else{
+            free(building->hunters[i]);
+        }
+    }
+    cleanBuildingRoomList(building->MasterRooms);
+    free(building->theGhost);
+}
 /*=======================================================================================================
                                              ROOM.C
 =======================================================================================================*/
@@ -673,7 +724,7 @@ void addGhostEvidence(GhostType *theGhost)
 void adjustGhostBoredom(GhostType *theGhost)
 {
     int alone = ghostAlone(theGhost);
-    if (alone == 0)
+    if (alone == 1)
     {
         theGhost->boredom = BOREDOM_MAX;
     }
@@ -754,6 +805,28 @@ void ghostControl(GhostType *theGhost)
     adjustGhostBoredom(theGhost);
 }
 
+void cleanRoomList(RoomType* room){
+    EvidenceNodeType* currEv = room->evidence->head;
+    EvidenceNodeType* nextEv = NULL;
+    while(currEv != NULL){
+        nextEv = currEv->next;
+        free(currEv);
+        currEv = nextEv;
+    }
+    free(room->evidence);
+
+    RoomNodeType* currR = room->connectedRooms->head;
+    RoomNodeType* nextR = NULL;
+    while(currR != NULL){
+        nextR = currR->next;
+        free(currR);
+        currR = nextR;
+    }
+    free(room->connectedRooms);
+    
+}
+
+
 /*=======================================================================================================
                                              HUNTERS.C
 =======================================================================================================*/
@@ -812,14 +885,19 @@ int enoughEvidence(HunterType* theHunter){
 
 void hunterscared(HunterType** theHunter){
     if((*theHunter)->fear >=100){
-        EvidenceNodeType* curr = (*theHunter)->notebook->head;
-        EvidenceNodeType* next = NULL;
-        while(curr != NULL){
-            next = curr->next;
-            free(curr);
-            curr = next;
-        }
-        free((*theHunter)->notebook);
+        printf("%s has ran away in fear.\n",(*theHunter)->name);
+        (*theHunter)->currRoom->currHunters[(*theHunter)->id] = NULL;
+        cleanNotebook(theHunter);
+
+        *theHunter = NULL;
+    }
+}
+
+void hunterBored(HunterType** theHunter){
+    if((*theHunter)->boredom>=100){
+        printf("%s got bored and left.\n",(*theHunter)->name);
+        (*theHunter)->currRoom->currHunters[(*theHunter)->id] = NULL;
+        cleanNotebook(theHunter);
         *theHunter = NULL;
     }
 }
@@ -1190,6 +1268,16 @@ void hunterControl(HunterType *theHunter)
     }
 }
 
+void cleanNotebook(HunterType** hunter){
+        EvidenceNodeType* curr = (*hunter)->notebook->head;
+        EvidenceNodeType* next = NULL;
+        while(curr != NULL){
+            next = curr->next;
+            free(curr);
+            curr = next;
+        }
+        free((*hunter)->notebook);
+}
 // void addEvidenceTypes(HunterType* theHunter){
 //     int contains = 0;
 //     for (int i = 0; i < 3;i++){
