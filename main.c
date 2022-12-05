@@ -2,27 +2,11 @@
 
 /*
 TO DO
-//implement hunter boredom
-//loses boredom when finding standard evidence(complete)
-//loses when moving(complete)
-//loses when comparing evidence(complete)
-//resets when finds ghostly(complete)
-//resets when in same room as ghost.(complete)
 
+make it so the ghost can not go to the van
+win conditions
+multi threading
 
-implement hunter decisions (move, collect evidence, share)
-check to see if there are other hunters in the same room
-make choice based on if alone or with others
-//if alone options 1-2
-if with others options 1-3
-
-we need a way to choose a random hunter in the same room to compare evidence with.(complete)
-
-
-//implement ghost decision (move , drop, do nothing) if in the same room with a hunter it cannot move
-//make decision based on if the ghost is alone or not
-//if alone options 1-3
-//if with hunter options 1-2
 */
 int main(int argc, char *argv[])
 {
@@ -31,6 +15,8 @@ int main(int argc, char *argv[])
 */
     // Initialize a random seed for the random number generators
     srand(time(NULL));
+    // srand(2402);
+
     //create building
     BuildingType building;
     initBuilding(&building);
@@ -40,7 +26,33 @@ int main(int argc, char *argv[])
     loadGhost(&building);
     //load the hunters
     loadHunnters(&building);
-
+    GhostType* ghost = building.theGhost;
+    HunterType* hunterOne = building.hunters[0];
+    HunterType* hunterTwo = building.hunters[1];
+    HunterType* hunterThree = building.hunters[2];
+    HunterType* hunterFour = building.hunters[3];
+    int x = 1;
+    for(int i = 0; i < 1000; i++){
+        // for(int y = 0; y < 4; y++){
+        //     if(strcmp(building.hunters[y]->currRoom->name,"Basement") == 0){
+        //         printf("==================IM IN THE BASEMENT===================\n");
+        //     }
+        //     if(strcmp(building.hunters[y]->currRoom->name,"Garage") == 0){
+        //         printf("==================IM IN THE GARAGE===================\n");
+        //     }
+        //     if(strcmp(building.hunters[y]->currRoom->name,"Kitchen") == 0){
+        //         printf("==================IM IN THE KITCHEN===================\n");
+        //     }
+        // }
+        printf("TURN: %d\n", i);
+        ghostControl(ghost);
+        hunterControl(hunterOne);
+        hunterControl(hunterTwo);
+        hunterControl(hunterThree);
+        hunterControl(hunterFour);
+    }
+    //emf, temp, finger, sound
+/*
     // create a semaphore
     sem_t mutex;
     // create threads for hunters and ghost
@@ -82,6 +94,7 @@ int main(int argc, char *argv[])
         if(1) ghostGone = 1;
         if(1) ghostDiscovered = 1;
         Sleep(1.5);
+    *\
     }
     
 
@@ -136,8 +149,12 @@ int main(int argc, char *argv[])
     // moveGhost(building.theGhost);
     // moveGhost(building.theGhost);
     // moveGhost(building.theGhost);
-
-    
+    RoomNodeType* curr = (&building.MasterRooms)->head;
+    while(curr != NULL){
+        printf("------------------------------------------------------------------\n%s\n", curr->room->name);
+        printRoomEvidence(curr->room->evidence);
+        curr = curr->next;
+    }
     return 0;
 }
 
@@ -450,7 +467,7 @@ void loadGhost(BuildingType *building)
 {
     GhostType *ghost;
     int randomGhostType = randInt(0, 4);
-    int randomRoom = randInt(0, 12);
+    int randomRoom = randInt(1, 12);
 
     // chooose a random room for the ghost to start
     int counter = 0;
@@ -478,7 +495,7 @@ void StandardEvidencePrint(int x)
     }
     else
     {
-        printf("The hunter has collected standard evidence.\n");
+        printf("has collected standard evidence.\n");
     }
 }
 
@@ -499,7 +516,7 @@ void addGhostEvidence(GhostType *theGhost)
             type = 0;
             value = randFloat(4.70, 5.00);
             if (value < 4.90)
-            {
+            {   
                 StandardEvidencePrint(0);
                 return;
             }
@@ -674,9 +691,12 @@ void moveGhost(GhostType *theGhost)
         curr = curr->next;
         counter++;
     }
+    printf("The Ghost has moved from %s to ",theGhost->currRoom->name);
     theGhost->currRoom->ghost = NULL;
     theGhost->currRoom = curr->room;
     theGhost->currRoom->ghost = theGhost;
+    printf("%s.\n", theGhost->currRoom->name);
+
 }
 
 void ghostControl(GhostType *theGhost)
@@ -742,7 +762,16 @@ void increaseHunterFear(HunterType *theHunter)
 
 int hunterNear(HunterType *theHunter)
 {
-    return 0;
+    int isAlone = 0;
+    for (int i = 0; i < 4; i++){
+        if(theHunter->currRoom->currHunters[i]!=NULL){
+            isAlone++;
+        }
+    }
+    if(isAlone>2){
+        return 0;
+    }
+    return 1;
 }
 
 void ghostNear(HunterType *theHunter, GhostType *theGhost)
@@ -801,7 +830,7 @@ void moveHunter(HunterType *theHunter, int x)
     }
     else
     {
-        rand = randInt(0, size - 1);
+        rand = randInt(0, size);
     }
     RoomNodeType *curr = theHunter->currRoom->connectedRooms->head;
 
@@ -811,6 +840,7 @@ void moveHunter(HunterType *theHunter, int x)
         curr = curr->next;
         counter++;
     }
+    printf("%s moved from %s to %s\n", theHunter->name, theHunter->currRoom->name, curr->room->name);
     theHunter->currRoom->currHunters[x] = NULL;
     theHunter->currRoom = curr->room;
     curr->room->currHunters[x] = theHunter;
@@ -919,6 +949,7 @@ void checkRoomEvidence(HunterType *theHunter)
     int found = 0;
     if (curr == NULL)
     {
+        printf("%s ", theHunter->name);
         StandardEvidencePrint(1);
         decreaseHunterBoredom(theHunter);
     }
@@ -948,7 +979,8 @@ void checkRoomEvidence(HunterType *theHunter)
             }
         }
         if (found == 0)
-        {
+        {   
+            printf("%s ", theHunter->name);
             StandardEvidencePrint(1);
             decreaseHunterBoredom(theHunter);
         }
@@ -1004,15 +1036,16 @@ void compareEvidence(HunterType *hunterSending, HunterType *hunterReceiving)
 {
     decreaseHunterBoredom(hunterSending);
     EvidenceNodeType *hsCurr = hunterSending->notebook->head;
-    EvidenceNodeType *hrCurr = hunterReceiving->notebook->head;
+    
     int shared = 0;
-    if (hrCurr == NULL && hsCurr != NULL)
+    if (hunterReceiving->notebook == NULL && hsCurr != NULL)
     {
         copyAllEvidence(hunterSending->notebook, hunterReceiving->notebook);
         shared = 1;
     }
     else
     {
+        EvidenceNodeType *hrCurr = hunterReceiving->notebook->head;
         while (hsCurr != NULL)
         {
             copyEvidence(hsCurr, hunterReceiving->notebook);
@@ -1038,6 +1071,7 @@ void hunterControl(HunterType *theHunter)
     1 is look for evidence
     2 is compare evidence
     */
+    int counter;
     int choice;
     int alone = hunterNear(theHunter);
     if (alone == 1)
@@ -1058,13 +1092,20 @@ void hunterControl(HunterType *theHunter)
     }
     else if (choice == 2)
     {
-        
-        int counter = randInt(0,4);
-        HunterType* currHunters[MAX_HUNTERS] = theHunter->currRoom->currHunters;
-        while(currHunters[counter] != theHunter || currHunters[counter] != NULL){
+        if(theHunter->notebook->head!=NULL){
+        int x = 0;
+        while(x == 0){
             counter = randInt(0, 4);
+            if(theHunter->currRoom->currHunters[counter] != NULL){
+            if (theHunter->currRoom->currHunters[counter]->id != theHunter->id){
+                    x = 1;
+                }
+            }
         }
-        compareEvidence(theHunter,currHunters[counter]);
+        // while(theHunter->currRoom->currHunters[counter] != NULL && theHunter->currRoom->currHunters[counter]->id != theHunter->id){
+        //     counter = randInt(0, 4);
+        // }
+        compareEvidence(theHunter,theHunter->currRoom->currHunters[counter]);}
     }
 }
 
