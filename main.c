@@ -1048,7 +1048,6 @@ void hunterControl(HunterType *theHunter)
     {
         choice = randInt(0, 3);
     }
-
     if (choice == 0)
     {
         moveHunter(theHunter, theHunter->id);
