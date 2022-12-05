@@ -10,49 +10,9 @@ multi threading
 */
 int main(int argc, char *argv[])
 { 
-    // // srand(time(NULL));
-    // srand(2402);
+    // srand(time(NULL));
+    srand(2402);
 
-    // //create building
-    // BuildingType building;
-    // initBuilding(&building);
-    // //create and connect rooms
-    // populateRooms(&building);
-    // //load the ghost
-    // loadGhost(&building);
-    // //load the hunters
-    // loadHunnters(&building);
-    // GhostType* ghost = building.theGhost;
-    // HunterType* hunterOne = building.hunters[0];
-    // HunterType* hunterTwo = building.hunters[1];
-    // HunterType* hunterThree = building.hunters[2];
-    // HunterType* hunterFour = building.hunters[3];
-    // int x = 1;
-    // for(int i = 0; i < 100; i++){
-    //     // for(int y = 0; y < 4; y++){
-    //     //     if(strcmp(building.hunters[y]->currRoom->name,"Basement") == 0){
-    //     //         printf("==================IM IN THE BASEMENT===================\n");
-    //     //     }
-    //     //     if(strcmp(building.hunters[y]->currRoom->name,"Garage") == 0){
-    //     //         printf("==================IM IN THE GARAGE===================\n");
-    //     //     }
-    //     //     if(strcmp(building.hunters[y]->currRoom->name,"Kitchen") == 0){
-    //     //         printf("==================IM IN THE KITCHEN===================\n");
-    //     //     }
-    //     // }
-    //     printf("TURN: %d\n", i);
-    //     ghostControl(ghost);
-    //     hunterControl(hunterOne);
-    //     hunterControl(hunterTwo);
-    //     hunterControl(hunterThree);
-    //     hunterControl(hunterFour);
-    // }
-/*
-+++++++++++++++++++++++++MAIN CONTROL FLOW+++++++++++++++++++++++++++++++++++++++
-*/ 
-    // Initialize a random seed for the random number generators
-    srand(time(NULL));
-    // srand(3);
     //create building
     BuildingType building;
     initBuilding(&building);
@@ -62,42 +22,89 @@ int main(int argc, char *argv[])
     loadGhost(&building);
     //load the hunters
     loadHunnters(&building);
-    // create threads for hunters and ghost
-    pthread_t h1, h2, h3, h4, gh;
 
-    GhostType* ghost = building.theGhost;
-    HunterType* hunterOne = building.hunters[0];
-    HunterType* hunterTwo = building.hunters[1];
-    HunterType* hunterThree = building.hunters[2];
-    HunterType* hunterFour = building.hunters[3];
-    
-    int huntersGone = 0;
-    int ghostGone = 0;
-    int ghostDiscovered = 0;
-    while(!huntersGone && !ghostGone && !ghostDiscovered){
-        // pthread_create(&gh, NULL, ghostFoo, ghost);
-        // if(building.hunters[0] != NULL)
-            pthread_create(&h1, NULL, hunterFoo, hunterOne);
-        // if(building.hunters[1] != NULL)
-            pthread_create(&h2, NULL, hunterFoo, hunterTwo);
-        // if(building.hunters[2] != NULL)
-            pthread_create(&h3, NULL, hunterFoo, hunterThree);
-        // if(building.hunters[3] != NULL)
-            pthread_create(&h4, NULL, hunterFoo, hunterFour);
+    int x = 1;
+    int over = 0;
+    for(int i = 0; i < 10000; i++){
+        // for(int y = 0; y < 4; y++){
+        //     if(strcmp(building.hunters[y]->currRoom->name,"Basement") == 0){
+        //         printf("==================IM IN THE BASEMENT===================\n");
+        //     }
+        //     if(strcmp(building.hunters[y]->currRoom->name,"Garage") == 0){
+        //         printf("==================IM IN THE GARAGE===================\n");
+        //     }
+        //     if(strcmp(building.hunters[y]->currRoom->name,"Kitchen") == 0){
+        //         printf("==================IM IN THE KITCHEN===================\n");
+        //     }
+        // }
+        printf("TURN: %d\n", i);
+        // for (int x = 0; x < 102;x++){
+        //     increaseHunterFear(building.hunters[0]);
+        // }
 
-        pthread_join(gh,NULL);
-        pthread_join(h1,NULL);
-        pthread_join(h2,NULL);
-        pthread_join(h3,NULL);
-        pthread_join(h4,NULL);
-
-        // if(1) huntersGone = 1;
-        // if(1) ghostGone = 1;
-        // if(1) ghostDiscovered = 1;
-        // Sleep(1.5);
+        ghostControl(building.theGhost);
+        if(building.hunters[0] != NULL)
+            hunterControl(building.hunters[0]);
+        if(building.hunters[1] != NULL)
+            hunterControl(building.hunters[1]);
+        if(building.hunters[2] != NULL)
+            hunterControl(building.hunters[2]);
+        if(building.hunters[3] != NULL)
+            hunterControl(building.hunters[3]);
+        over = endersGame(&building);
+        if(over == 1){
+            break;
+        }
     }
-    
+/*
++++++++++++++++++++++++++MAIN CONTROL FLOW+++++++++++++++++++++++++++++++++++++++
+*/ 
+    // // Initialize a random seed for the random number generators
+    // srand(time(NULL));
+    // // srand(3);
+    // //create building
+    // BuildingType building;
+    // initBuilding(&building);
+    // //create and connect rooms
+    // populateRooms(&building);
+    // //load the ghost
+    // loadGhost(&building);
+    // //load the hunters
+    // loadHunnters(&building);
+    // // create threads for hunters and ghost
+    // pthread_t h1, h2, h3, h4, gh;
 
+    // GhostType* ghost = building.theGhost;
+    // HunterType* hunterOne = building.hunters[0];
+    // HunterType* hunterTwo = building.hunters[1];
+    // HunterType* hunterThree = building.hunters[2];
+    // HunterType* hunterFour = building.hunters[3];
+    
+    // int huntersGone = 0;
+    // int ghostGone = 0;
+    // int ghostDiscovered = 0;
+    // while(!huntersGone && !ghostGone && !ghostDiscovered){
+    //     pthread_create(&gh, NULL, ghostFoo, ghost);
+    //     // if(building.hunters[0] != NULL)
+    //         pthread_create(&h1, NULL, hunterFoo, hunterOne);
+    //     // if(building.hunters[1] != NULL)
+    //         pthread_create(&h2, NULL, hunterFoo, hunterTwo);
+    //     // if(building.hunters[2] != NULL)
+    //         pthread_create(&h3, NULL, hunterFoo, hunterThree);
+    //     // if(building.hunters[3] != NULL)
+    //         pthread_create(&h4, NULL, hunterFoo, hunterFour);
+
+    //     pthread_join(gh,NULL);
+    //     pthread_join(h1,NULL);
+    //     pthread_join(h2,NULL);
+    //     pthread_join(h3,NULL);
+    //     pthread_join(h4,NULL);
+
+    //     // if(1) huntersGone = 1;
+    //     // if(1) ghostGone = 1;
+    //     // if(1) ghostDiscovered = 1;
+    //     // Sleep(1.5);
+    // }
 /*
 +++++++++++++++++++++++++MAIN CONTROL FLOW END+++++++++++++++++++++++++++++++++++++
 */
@@ -225,6 +232,9 @@ float randFloat(float a, float b)
     else{
         int count = 0;
         for (int i = 0; i < 4;i++){
+            if(building->hunters[i]!=NULL){
+                hunterscared(&building->hunters[i]);
+            }
             if(building->hunters[i]==NULL){
                 count++;
             }
@@ -233,6 +243,15 @@ float randFloat(float a, float b)
             printf("All the hunters have run away.");
             return 1;
         } 
+    }
+    int enoughE = 0;
+    for(int j = 0; j < 4; j++){
+        if(building->hunters[j]!=NULL && building->hunters[j]->notebook!=NULL){
+            enoughE = enoughEvidence(building->hunters[j]);
+        }
+        if(enoughE == 1){
+            return 1;
+        }
     }
     return 0;
  }
@@ -696,6 +715,9 @@ void moveGhost(GhostType *theGhost)
         curr = curr->next;
         counter++;
     }
+    if(strcmp(curr->room->name,"Van") == 0){
+        curr = curr->next->next;
+    }
     printf("The Ghost has moved from %s to ",theGhost->currRoom->name);
     theGhost->currRoom->ghost = NULL;
     theGhost->currRoom = curr->room;
@@ -748,6 +770,58 @@ void initHunter(char *name, int fear, int boredom, RoomType *currRoom, EvidenceC
     (*hunter)->currRoom = currRoom;
     (*hunter)->device = device;
     (*hunter)->notebook = *notebook;
+}
+
+int enoughEvidence(HunterType* theHunter){
+    int emf=0;//0
+    int temp=0;//1
+    int finger=0;//2
+    int sound=0;//3
+    int counter=0;
+    EvidenceNodeType* curr = theHunter->notebook->head;
+    while(curr!=NULL){
+        if(curr->evidence->evidenceType==0){
+            emf++;
+        }else if(curr->evidence->evidenceType==1){
+            temp++;
+        }else if(curr->evidence->evidenceType==2){
+            finger++;
+        }else if(curr->evidence->evidenceType==3){
+            sound++;
+        }
+        curr = curr->next;
+    }
+    if(emf>=1){
+        counter++;
+    }
+    if(temp>=1){
+        counter++;
+    }
+    if(finger>=1){
+        counter++;
+    }
+    if(sound>=1){
+        counter++;
+    }
+    if(counter >=3){
+        printf("%s has found enough evidence and won the game.\n", theHunter->name);
+        return 1;
+    }
+    return 0;
+}
+
+void hunterscared(HunterType** theHunter){
+    if((*theHunter)->fear >=100){
+        EvidenceNodeType* curr = (*theHunter)->notebook->head;
+        EvidenceNodeType* next = NULL;
+        while(curr != NULL){
+            next = curr->next;
+            free(curr);
+            curr = next;
+        }
+        free((*theHunter)->notebook);
+        *theHunter = NULL;
+    }
 }
 
 void decreaseHunterBoredom(HunterType *theHunter)
@@ -1061,11 +1135,11 @@ void compareEvidence(HunterType *hunterSending, HunterType *hunterReceiving)
     }
     if (shared == 1)
     {
-        printf("Hunter: %s has shared GHOSTLY EVIDENCE with %s.\n", hunterSending->name, hunterReceiving->name);
+        printf("%s has shared GHOSTLY EVIDENCE with %s.\n", hunterSending->name, hunterReceiving->name);
     }
     else
     {
-        printf("Hunter: %s has no evidence to share with %s.\n", hunterSending->name, hunterReceiving->name);
+        printf("%s has no evidence to share with %s.\n", hunterSending->name, hunterReceiving->name);
     }
 }
 
