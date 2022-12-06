@@ -1175,18 +1175,22 @@ void copyAllEvidence(EvidenceLinkedList *hunterS, EvidenceLinkedList *hunterR)
 void copyEvidence(EvidenceNodeType *evidenceNode, EvidenceLinkedList *hunterR)
 {
     EvidenceNodeType *hrCurr = hunterR->head;
-
+    int a = 0;
     while (hrCurr != NULL)
     {
         if (hrCurr->evidence->id == evidenceNode->evidence->id)
         {
-            EvidenceNodeType *new = (EvidenceNodeType *)calloc(1, sizeof(EvidenceNodeType));
+            a = 1;
+        }
+        hrCurr = hrCurr->next;
+    }
+
+    if(a == 0){
+        EvidenceNodeType *new = (EvidenceNodeType *)calloc(1, sizeof(EvidenceNodeType));
             new->evidence = evidenceNode->evidence;
             new->next = hunterR->head;
             hunterR->head = new;
             return;
-        }
-        hrCurr = hrCurr->next;
     }
 }
 
@@ -1196,7 +1200,10 @@ void compareEvidence(HunterType *hunterSending, HunterType *hunterReceiving)
     EvidenceNodeType *hsCurr = hunterSending->notebook->head;
     
     int shared = 0;
-    if (hunterReceiving->notebook == NULL && hsCurr != NULL)
+    if(hunterSending->notebook!=NULL){
+        
+    
+    if (hunterReceiving->notebook == NULL)
     {
         copyAllEvidence(hunterSending->notebook, hunterReceiving->notebook);
         shared = 1;
@@ -1214,7 +1221,7 @@ void compareEvidence(HunterType *hunterSending, HunterType *hunterReceiving)
     if (shared == 1)
     {
         printf("%s has shared GHOSTLY EVIDENCE with %s.\n", hunterSending->name, hunterReceiving->name);
-    }
+    }}
     else
     {
         printf("%s has no evidence to share with %s.\n", hunterSending->name, hunterReceiving->name);
