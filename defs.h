@@ -91,6 +91,7 @@ typedef struct Ghost
 	RoomType *currRoom;
 	int boredom;
 	int evidenceID;
+	int actualEvidence;
 	sem_t mutex;
 } GhostType;
 
@@ -111,6 +112,7 @@ typedef struct Building
 	GhostType *theGhost;
 	RoomLinkedList MasterRooms;
 	HunterType *hunters[MAX_HUNTERS];
+	EvidenceLinkedList* collectedEvidence;
 	sem_t mutex;
 } BuildingType;
 
@@ -150,17 +152,17 @@ void ghostNear(HunterType *theHunter);
 void loadHunnters(BuildingType *building);
 void enterName(char *name, int x);
 void moveHunter(HunterType *theHunter, int x);
-void takeEvidence(EvidenceLinkedList *room, EvidenceLinkedList *hunter, int id);
-void checkRoomEvidence(HunterType *theHunter);
+void takeEvidence(EvidenceLinkedList *room, EvidenceLinkedList *hunter, int id, BuildingType *theBuilding);
+void checkRoomEvidence(HunterType *theHunter, BuildingType* building);
 void copyAllEvidence(EvidenceLinkedList *hunterS, EvidenceLinkedList *hunterR);
 void copyEvidence(EvidenceNodeType *evidenceNode, EvidenceLinkedList *hunterR);
 void compareEvidence(HunterType *hunterSending, HunterType *hunterReceiving);
-void hunterControl(HunterType *theHunter);
+void hunterControl(HunterType *theHunter, BuildingType* theBuilding);
 void cleanNotebook(HunterType** hunter);
 void initEvidence(int id, EvidenceClassType device, float value, EvidenceType **newEvidence);
 void addEvidence(EvidenceLinkedList *roomEvidenceList, EvidenceType *newEvidence);
 void printRoomEvidence(EvidenceLinkedList *roomEvidence);
- int endersGame(BuildingType* building);
+int endersGame(BuildingType* building);
 
 
 
