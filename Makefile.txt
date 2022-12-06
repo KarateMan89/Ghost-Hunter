@@ -1,0 +1,30 @@
+CC = gcc
+
+CFLAGS = -Wall -Wextra -Werror -std=c99
+
+SOURCES = defs.h
+
+SOURCES += main.c
+
+SOURCES += building.c
+
+SOURCES += ghost.c
+
+SOURCES += hunter.c
+
+SOURCES += room.c
+
+SOURCES += thread.c
+
+OBJECTS = $(SOURCES:.c=.o)
+
+TARGET = ghost_hunters
+
+$(TARGET): $(OBJECTS)
+    $(CC) $(CFLAGS) -o $@ $^
+
+%.o: %.c
+    $(CC) $(CFLAGS) -c $<
+
+clean:
+    rm -f $(OBJECTS) $(TARGET)
