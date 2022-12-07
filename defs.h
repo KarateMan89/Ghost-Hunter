@@ -92,7 +92,7 @@ typedef struct Ghost
 	int boredom;
 	int evidenceID;
 	int actualEvidence;
-	sem_t mutex;
+	struct Building *building;
 } GhostType;
 
 typedef struct Hunter
@@ -104,7 +104,7 @@ typedef struct Hunter
 	RoomType *currRoom;
 	EvidenceClassType device;
 	EvidenceLinkedList *notebook;
-	sem_t mutex;
+	struct Building* building;
 } HunterType;
 
 typedef struct Building
