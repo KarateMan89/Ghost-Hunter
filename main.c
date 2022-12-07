@@ -666,7 +666,7 @@ void addGhostEvidence(GhostType *theGhost)
         {
         case 0: // EMF
             type = 0;
-            value = randFloat(4.70, 5.00);
+            value = randFloat(4.70, 6.00);
             if (value < 4.90)
             {   
                 StandardEvidencePrint(0);
@@ -675,7 +675,7 @@ void addGhostEvidence(GhostType *theGhost)
             break;
         case 1: // TEMP
             type = 1;
-            value = randFloat(-10.00, 1.00);
+            value = randFloat(-10.00, 2.00);
             if (value > 0.00)
             {
                 StandardEvidencePrint(0);
@@ -698,7 +698,7 @@ void addGhostEvidence(GhostType *theGhost)
         {
         case 0: // EMF
             type = 0;
-            value = randFloat(4.70, 5.00);
+            value = randFloat(4.70, 6.00);
             if (value < 4.90)
             {
                 StandardEvidencePrint(0);
@@ -707,7 +707,7 @@ void addGhostEvidence(GhostType *theGhost)
             break;
         case 1: // TEMP
             type = 1;
-            value = randFloat(-10.00, 1.00);
+            value = randFloat(-10.00, 2.00);
             if (value > 0.00)
             {
                 StandardEvidencePrint(0);
@@ -716,7 +716,7 @@ void addGhostEvidence(GhostType *theGhost)
             break;
         case 2: // SOUND
             type = 3;
-            value = randFloat(65.00, 75.00);
+            value = randFloat(65.00, 76.00);
             if (value < 70.00)
             {
                 StandardEvidencePrint(0);
@@ -730,7 +730,7 @@ void addGhostEvidence(GhostType *theGhost)
         {
         case 0: // EMF
             type = 0;
-            value = randFloat(4.70, 5.00);
+            value = randFloat(4.70, 6.00);
             if (value < 4.90)
             {
                 StandardEvidencePrint(0);
@@ -748,7 +748,7 @@ void addGhostEvidence(GhostType *theGhost)
             break;
         case 2: // SOUND
             type = 3;
-            value = randFloat(65.00, 75.00);
+            value = randFloat(65.00, 76.00);
             if (value < 70.00)
             {
                 StandardEvidencePrint(0);
@@ -762,7 +762,7 @@ void addGhostEvidence(GhostType *theGhost)
         {
         case 0: // TEMP
             type = 1;
-            value = randFloat(-10.00, 1.00);
+            value = randFloat(-10.00, 2.00);
             if (value > 0.00)
             {
                 StandardEvidencePrint(0);
@@ -780,7 +780,7 @@ void addGhostEvidence(GhostType *theGhost)
             break;
         case 2: // SOUND
             type = 3;
-            value = randFloat(65.00, 75.00);
+            value = randFloat(65.00, 76.00);
             if (value < 70.00)
             {
                 StandardEvidencePrint(0);
@@ -793,7 +793,9 @@ void addGhostEvidence(GhostType *theGhost)
     theGhost->actualEvidence++;
     // initializes EvidenceType and Adds to the back of the room LinkedListEvidence
     EvidenceType *newEvidence;
+    
     initEvidence(theGhost->evidenceID, type, value, &newEvidence);
+    printf("The Ghost has left %s ghostly evidence in %s.\n",devices[newEvidence->evidenceType],theGhost->currRoom->name);
     theGhost->evidenceID++;
     addEvidence(theGhost->currRoom->evidence, newEvidence);
 }
