@@ -10,39 +10,6 @@ multi threading
 */
 int main(int argc, char *argv[])
 { 
-    // printf("===START GAME===\n");
-    // srand(time(NULL));
-    // // srand(12);
-    // //create building
-    // BuildingType building;
-    // initBuilding(&building);
-    // //create and connect rooms hi where are you going? im trying to figure out threads
-    // populateRooms(&building);
-    // //load the ghost
-    // loadGhost(&building);
-    // //load the hunters
-    // printf("\nSELECT HUNTER NAMES\n\n");
-    // loadHunnters(&building);
-
-    // int x = 1;
-    // int over = 0;
-    // for(int i = 0; i < 2000; i++){
-    //     printf("TURN: %d\n", i);
-    //     ghostControl(building.theGhost);
-    //     if(building.hunters[0]->boredom > 0 && building.hunters[0]->fear<MAX_FEAR) 
-    //         hunterControl(building.hunters[0],&building);
-    //     if(building.hunters[1]->boredom > 0 && building.hunters[1]->fear<MAX_FEAR)
-    //         hunterControl(building.hunters[1],&building);
-    //     if(building.hunters[2]->boredom > 0 && building.hunters[2]->fear<MAX_FEAR)
-    //         hunterControl(building.hunters[2],&building);
-    //     if(building.hunters[3]->boredom > 0 && building.hunters[3]->fear<MAX_FEAR)
-    //         hunterControl(building.hunters[3],&building);
-    //     over = endersGame(&building);
-    //     if(over == 1){
-    //         break;
-    //     }
-    // }
-    // cleanBuilding(&building);
     /*
     +++++++++++++++++++++++++MAIN CONTROL FLOW+++++++++++++++++++++++++++++++++++++++
     */ 
@@ -62,62 +29,74 @@ int main(int argc, char *argv[])
     loadHunnters(&building);
     // create threads for hunters and ghost
     pthread_t h1, h2, h3, h4, gh;
-    int over = 0;
-    while(over != 1){
 
-        pthread_create(&gh, NULL, ghostFoo, building.theGhost);
-        if(building.hunters[0]->boredom > 0 && building.hunters[0]->fear<MAX_FEAR) 
-            pthread_create(&h1, NULL, hunterFoo, building.hunters[0]);
-        if(building.hunters[1]->boredom > 0 && building.hunters[1]->fear<MAX_FEAR)
-            pthread_create(&h2, NULL, hunterFoo, building.hunters[1]);
-        if(building.hunters[2]->boredom > 0 && building.hunters[2]->fear<MAX_FEAR)
-            pthread_create(&h3, NULL, hunterFoo, building.hunters[2]);
-        if(building.hunters[3]->boredom > 0 && building.hunters[3]->fear<MAX_FEAR)
-            pthread_create(&h4, NULL, hunterFoo, building.hunters[3]);
+    pthread_create(&gh, NULL, ghostFoo, building.theGhost);
+    pthread_create(&h1, NULL, hunterFoo, building.hunters[0]);
+    pthread_create(&h2, NULL, hunterFoo, building.hunters[1]);
+    pthread_create(&h3, NULL, hunterFoo, building.hunters[2]);
+    pthread_create(&h4, NULL, hunterFoo, building.hunters[3]);
 
-        pthread_join(gh,NULL);
-        pthread_join(h1,NULL);
-        pthread_join(h2,NULL);
-        pthread_join(h3,NULL);
-        pthread_join(h4,NULL);
-		
-		printf("\n");
-        over = endersGame(&building);
-    }
+    pthread_join(gh,NULL);
+    pthread_join(h1,NULL);
+    pthread_join(h2,NULL);
+    pthread_join(h3,NULL);
+    pthread_join(h4,NULL);
+
+    printResults(&building);
     cleanBuilding(&building);
-
+    return 0;
 /*
 +++++++++++++++++++++++++MAIN CONTROL FLOW END+++++++++++++++++++++++++++++++++++++
 */
+}
+
+int gameOver(BuildingType* theBuilding){
+    if(theBuilding->ghost_bored == 1){
+        return 1;
+    }else if(theBuilding->huntersScared + theBuilding->huntersBored >= 4){
+        return 1;
+    }else if(enoughEvidence >= 0){
+        return 1;
+    }
     return 0;
+}
+
+void printResults(BuildingType* theBuilding){
+    printf("===GAME OVER===\n");
+    if(theBuilding->ghost_bored==1){
+        printf("The ghost got bored and has left the building.\nThe game is a tie.");
+    }
+        for (int i = 0; i < 4;i++){
+                if(theBuilding->hunters[i]->boredom<=0){
+                    printf("%s left the building from boredom.\n",theBuilding->hunters[i]->name);
+                }else if(theBuilding->hunters[1]->fear>=100){
+                    printf("%s ran away from the building in fear.\n", theBuilding->hunters[i]->name);
+                }
+        }
+    if (theBuilding->huntersScared+theBuilding->huntersBored == 4){
+        printf("All the hunters have left the building and the ghost has won.\n");
+    }
+    if(theBuilding->enoughEvidence > -1){
+        printf("%s has found enough evidence and won the game for the hunters.\n", theBuilding->hunters[theBuilding->enoughEvidence]->name);
+    }
 }
 
 void* hunterFoo(void* h){
     HunterType* hunter = (HunterType*) h;
-    
-    if(sem_wait(&(hunter->building->mutex)) < 0){
-        printf("Semaphore wait error.\n");
-        exit(1);
-    }
-    hunterControl(hunter, hunter->building);
-    if(sem_post(&(hunter->building->mutex)) < 0){
-        printf("Semaphore wait error.\n");
-        exit(1);
+    int over = 0;
+    while(hunter->building->game_over != 1){
+        hunterControl(hunter, hunter->building);
+        over = gameOver(hunter->building);
     }
     return 0;
 }
 
 void* ghostFoo(void* gh){
     GhostType* ghost = (GhostType*) gh;
-
-    if(sem_wait(&(ghost->building->mutex)) < 0){
-        printf("Semaphore wait error.\n");
-        exit(1);
-    }
-    ghostControl(ghost);
-    if(sem_post(&(ghost->building->mutex)) < 0){
-        printf("Semaphore wait error.\n");
-        exit(1);
+    int over = 0;
+    while(over != 1){
+        ghostControl(ghost);
+        over = gameOver(ghost->building);
     }
     return 0;
 }
@@ -159,74 +138,72 @@ In: The function takes in a pointer to a BuildingType object, which contains inf
 Out: The function outputs messages to the console about the state of the game as it progresses.
 Return: The function returns an integer indicating whether the game has ended or not. If the game has ended, the function returns 1, otherwise it returns 0.
 */
- int endersGame(BuildingType* building){
-    if(building->theGhost->boredom == 0){
-        printf("The ghost got bored and has left the building.\nThe game is a tie.");
-        return 1;
-    } else {
-        int count = 0;
-        for (int i = 0; i < 4;i++){
-            hunterBored(&building->hunters[i]);
+// int endersGame(BuildingType* building){
+//         int count = 0;
+//         for (int i = 0; i < 4;i++){
+//             hunterBored(building->hunters[i]);
             
-            if(strcmp(building->hunters[i]->currRoom->name,"yourMom")==0){
-                count++;
-            }
-        }
-        if (count == 4){
-            printf("===GAME OVER===\n");
-            for (int i = 0; i < 4;i++){
-                if(&building->hunters[i]->boredom<=0){
-                    printf("%s had left the building from boredom.\n",building->hunters[i]->name);
-                }else{
-                    printf("%s had ran away from the building in fear.\n", building->hunters[i]->name);
-                }
-            }
-            printf("All the hunters have left the building.\nThe ghost wins.");
-            return 1;
-        } 
-        count = 0;
-        for (int i = 0; i < 4;i++){
-                hunterscared(&building->hunters[i]);
-            if(strcmp(building->hunters[i]->currRoom->name,"yourMom")==0){
-                count++;
-            }
-        }
-        if (count == 4){
-            printf("===GAME OVER===\n");
-            for (int i = 0; i < 4;i++){
-                if(&building->hunters[i]->boredom<=0){
-                    printf("%s had left the building from boredom.\n",building->hunters[i]->name);
-                }else{
-                    printf("%s had run away from the building in fear.\n", building->hunters[i]->name);
-                }
-            }
-                printf("All the hunters have left the building.\nThe ghost wins.");
-            return 1;
-        } 
-    }
-    int enoughE = 0;
-    for(int j = 0; j < 4; j++){
-        if(strcmp(building->hunters[j]->currRoom->name,"yourMom")!=0){
-            enoughE = enoughEvidence(building->hunters[j]);
-            if(enoughE == 1){
-                printf("===GAME OVER===\n");
-                for (int i = 0; i < 4;i++){
-                    if(&building->hunters[i]->boredom<=0){
-                        printf("%s had left the building from boredom.\n",building->hunters[i]->name);
-                    }else if(building->hunters[i]->fear>=100){
-                        printf("%s had run away from the building in fear.\n", building->hunters[i]->name);
-                    }
-                } 
-                printf("%s has found enough evidence and won the game for the hunters.\n", building->hunters[j]->name);
-                return 1;
-            }
-            if(enoughE == 1){
-                return 1;
-            }
-        }
-    }
-    return 0;
-}
+//             if(building->hunters[i]->boredom<=0){
+//                 count++;
+//             }
+//         }
+//         if (count == 4){
+//             printf("===GAME OVER===\n");
+//             for (int i = 0; i < 4;i++){
+//                 if(building->hunters[i]->boredom<=0){
+//                     printf("%s had left the building from boredom.\n",building->hunters[i]->name);
+//                 }else{
+//                     printf("%s had ran away from the building in fear.\n", building->hunters[i]->name);
+//                 }
+//             }
+//             printf("All the hunters have left the building.\nThe ghost wins.");
+//             return 1;
+//         } 
+//         count = 0;
+//         for (int i = 0; i < 4;i++){
+//                 hunterscared(building->hunters[i]);
+//             if(building->hunters[i]->fear>=100){
+//                 count++;
+//             }
+//         }
+//         if (count == 4){
+//             printf("===GAME OVER===\n");
+//             for (int i = 0; i < 4;i++){
+//                 if(building->hunters[i]->boredom<=0){
+//                     printf("%s had left the building from boredom.\n",building->hunters[i]->name);
+//                 }else{
+//                     printf("%s had run away from the building in fear.\n", building->hunters[i]->name);
+//                 }
+//             }
+//                 printf("All the hunters have left the building.\nThe ghost wins.");
+//             return 1;
+//         } 
+    
+//     int enoughE = 0;
+//     for(int j = 0; j < 4; j++){
+//         if(&building->hunters[j]->boredom>0){
+//             if(&building->hunters[j]->fear<100){
+//                 enoughE = enoughEvidence(building->hunters[j]);
+//                 if(enoughE == 1){
+//                     printf("===GAME OVER===\n");
+//                     for (int i = 0; i < 4;i++){
+//                         if(&building->hunters[i]->boredom<=0){
+//                             printf("%s had left the building from boredom.\n",building->hunters[i]->name);
+//                         }else if(building->hunters[i]->fear>=100){
+//                             printf("%s had run away from the building in fear.\n", building->hunters[i]->name);
+//                         }
+//                     } 
+//                     printf("%s has found enough evidence and won the game for the hunters.\n", building->hunters[j]->name);
+//                     return 1;
+//                 }
+//                 if(enoughE == 1){
+//                     return 1;
+//                 }
+//             }
+//         }
+//     }
+//     return 0;
+// }
 
 /*=======================================================================================================
                                              BUILDING.C
@@ -243,12 +220,10 @@ void initBuilding(BuildingType *building)
     EvidenceLinkedList* collectedEvidence = (EvidenceLinkedList*) calloc(1,sizeof(EvidenceLinkedList));
     collectedEvidence->head = NULL;
     building->collectedEvidence = collectedEvidence;
-    sem_t mutex;
-    if(sem_init(&mutex,0,1) < 0){
-        printf("Semaphore initialization error.");
-        exit(1);
-    }
-    building->mutex = mutex;
+    building->game_over = 0;
+    building->huntersBored = 0;
+    building->huntersScared = 0;
+    building->enoughEvidence = -1;
 }
 /*
 Function: appendRoom
@@ -344,8 +319,6 @@ return:
 */
 void populateRooms(BuildingType *building)
 {
-    RoomType *yourMom = calloc(1,sizeof(RoomType));
-    initRoom(yourMom, "yourMom");
     RoomType *van = calloc(1, sizeof(RoomType));
     initRoom(van, "Van");
     RoomType *hallway = calloc(1, sizeof(RoomType));
@@ -374,8 +347,6 @@ void populateRooms(BuildingType *building)
     initRoom(utility_room, "Utility Room");
 
     // Now create a linked list of rooms using RoomNodeType in the Building
-    RoomNodeType *yourMom_node = calloc(1,sizeof(RoomNodeType));
-    yourMom_node->room = yourMom;
     RoomNodeType *van_node = calloc(1, sizeof(RoomNodeType));
     van_node->room = van;
     RoomNodeType *hallway_node = calloc(1, sizeof(RoomNodeType));
@@ -405,7 +376,6 @@ void populateRooms(BuildingType *building)
 
     // Building->MasterRooms might be a linked list structre, or maybe just a node.
     // initRoomList(&building->MasterRooms);
-    appendRoom(&building->MasterRooms, yourMom_node);
     appendRoom(&building->MasterRooms, van_node);
     appendRoom(&building->MasterRooms, hallway_node);
     appendRoom(&building->MasterRooms, master_bedroom_node);
@@ -422,7 +392,6 @@ void populateRooms(BuildingType *building)
 
     // Now connect the rooms. It is possible you do not need a separate
     // function for this, but it is provided to give you a starting point.
-    connectRooms(yourMom, van);
     connectRooms(van, hallway);
     connectRooms(hallway, master_bedroom);
     connectRooms(hallway, boys_bedroom);
@@ -484,11 +453,9 @@ return:
 void cleanBuilding(BuildingType* building){
     for (int i = 0; i < 4; i++){
         cleanNotebook(&(building->hunters[i]));
-        // free(building->hunters[i]->building);
         free(building->hunters[i]);
     }
     cleanBuildingRoomList(building->MasterRooms);
-    //free(building->theGhost->building);
     free(building->theGhost);
     cleanBuildingEvidence(building->collectedEvidence);
 }
@@ -532,6 +499,12 @@ void initRoom(RoomType *room, char *name)
     EvidenceLinkedList *eList = (EvidenceLinkedList *)calloc(1, sizeof(EvidenceLinkedList));
     room->evidence = eList;
     room->evidence->head = NULL;
+    sem_t mutexR;
+    if(sem_init(&mutexR, 0 , 1) < 0){
+        printf("Semaphore initialization error.\n");
+        exit(1);
+    }
+    room->mutexR = mutexR;
 }
 
 /*
@@ -603,7 +576,7 @@ void loadGhost(BuildingType *building)
 {
     GhostType *ghost;
     int randomGhostType = randInt(0, 4);
-    int randomRoom = randInt(2, 13);
+    int randomRoom = randInt(1, 12);
 
     // chooose a random room for the ghost to start
     int counter = 0;
@@ -623,8 +596,17 @@ void loadGhost(BuildingType *building)
     printf("The Ghost is a %s and starts in room %s.\n", ghostNames[building->theGhost->ghostType], building->theGhost->currRoom->name);
 }
 
+int ghostBored(GhostType* theGhost){
+    if(theGhost->boredom == 0){
+        theGhost->building->ghost_bored = 1;
+        return 1;
+    }
+    return 0;
+}
+
+
 /*
-Function:   
+Function: StandardEvidencePrint
 Purpose:   
 in/out:   
 in: 
@@ -653,151 +635,154 @@ return:
 */
 void addGhostEvidence(GhostType *theGhost)
 {
-    /*
-        calaute type of evidence
-        calc valuse of evidence
-    */
-    int type = randInt(0, 3);
-    int value;
-    switch (theGhost->ghostType)
-    {
-    case 0: // Leaves ghostly EMF, TEMPERATURE, and FINGERPRINTS
-        switch (type)
+    // if(sem_trywait(&theGhost->currRoom->mutexR) == 0){
+        int type = randInt(0, 3);
+        int value;
+        switch (theGhost->ghostType)
         {
-        case 0: // EMF
-            type = 0;
-            value = randFloat(4.70, 6.00);
-            if (value < 4.90)
-            {   
-                StandardEvidencePrint(0);
-                return;
+        case 0: // Leaves ghostly EMF, TEMPERATURE, and FINGERPRINTS
+            switch (type)
+            {
+            case 0: // EMF
+                type = 0;
+                value = randFloat(4.70, 6.00);
+                if (value < 4.90)
+                {   
+                    StandardEvidencePrint(0);
+                    return;
+                }
+                break;
+            case 1: // TEMP
+                type = 1;
+                value = randFloat(-10.00, 2.00);
+                if (value > 0.00)
+                {
+                    StandardEvidencePrint(0);
+                    return;
+                }
+                break;
+            case 2: // FINGER
+                type = 2;
+                value = randInt(0, 2);
+                if (value == 0)
+                {
+                    StandardEvidencePrint(0);
+                    return;
+                }
+                break;
             }
             break;
-        case 1: // TEMP
-            type = 1;
-            value = randFloat(-10.00, 2.00);
-            if (value > 0.00)
+        case 1: // Leaves ghostly EMF, TEMPERATURE, and SOUND
+            switch (type)
             {
-                StandardEvidencePrint(0);
-                return;
+            case 0: // EMF
+                type = 0;
+                value = randFloat(4.70, 6.00);
+                if (value < 4.90)
+                {
+                    StandardEvidencePrint(0);
+                    return;
+                }
+                break;
+            case 1: // TEMP
+                type = 1;
+                value = randFloat(-10.00, 2.00);
+                if (value > 0.00)
+                {
+                    StandardEvidencePrint(0);
+                    return;
+                }
+                break;
+            case 2: // SOUND
+                type = 3;
+                value = randFloat(65.00, 76.00);
+                if (value < 70.00)
+                {
+                    StandardEvidencePrint(0);
+                    return;
+                }
+                break;
             }
             break;
-        case 2: // FINGER
-            type = 2;
-            value = randInt(0, 2);
-            if (value == 0)
+        case 2: // Leaves ghostly EMF, FINGERPRINTS, and SOUND
+            switch (type)
             {
-                StandardEvidencePrint(0);
-                return;
+            case 0: // EMF
+                type = 0;
+                value = randFloat(4.70, 6.00);
+                if (value < 4.90)
+                {
+                    StandardEvidencePrint(0);
+                    return;
+                }
+                break;
+            case 1: // FINGER
+                type = 2;
+                value = randInt(0, 2);
+                if (value == 0)
+                {
+                    StandardEvidencePrint(0);
+                    return;
+                }
+                break;
+            case 2: // SOUND
+                type = 3;
+                value = randFloat(65.00, 76.00);
+                if (value < 70.00)
+                {
+                    StandardEvidencePrint(0);
+                    return;
+                }
+                break;
+            }
+            break;
+        case 3: // Leaves ghostly TEMPERATURE, FINGERPRINTS, and SOUND
+            switch (type)
+            {
+            case 0: // TEMP
+                type = 1;
+                value = randFloat(-10.00, 2.00);
+                if (value > 0.00)
+                {
+                    StandardEvidencePrint(0);
+                    return;
+                }
+                break;
+            case 1: // FINGER
+                type = 2;
+                value = randInt(0, 2);
+                if (value == 0)
+                {
+                    StandardEvidencePrint(0);
+                    return;
+                }
+                break;
+            case 2: // SOUND
+                type = 3;
+                value = randFloat(65.00, 76.00);
+                if (value < 70.00)
+                {
+                    StandardEvidencePrint(0);
+                    return;
+                }
+                break;
             }
             break;
         }
-        break;
-    case 1: // Leaves ghostly EMF, TEMPERATURE, and SOUND
-        switch (type)
-        {
-        case 0: // EMF
-            type = 0;
-            value = randFloat(4.70, 6.00);
-            if (value < 4.90)
-            {
-                StandardEvidencePrint(0);
-                return;
-            }
-            break;
-        case 1: // TEMP
-            type = 1;
-            value = randFloat(-10.00, 2.00);
-            if (value > 0.00)
-            {
-                StandardEvidencePrint(0);
-                return;
-            }
-            break;
-        case 2: // SOUND
-            type = 3;
-            value = randFloat(65.00, 76.00);
-            if (value < 70.00)
-            {
-                StandardEvidencePrint(0);
-                return;
-            }
-            break;
-        }
-        break;
-    case 2: // Leaves ghostly EMF, FINGERPRINTS, and SOUND
-        switch (type)
-        {
-        case 0: // EMF
-            type = 0;
-            value = randFloat(4.70, 6.00);
-            if (value < 4.90)
-            {
-                StandardEvidencePrint(0);
-                return;
-            }
-            break;
-        case 1: // FINGER
-            type = 2;
-            value = randInt(0, 2);
-            if (value == 0)
-            {
-                StandardEvidencePrint(0);
-                return;
-            }
-            break;
-        case 2: // SOUND
-            type = 3;
-            value = randFloat(65.00, 76.00);
-            if (value < 70.00)
-            {
-                StandardEvidencePrint(0);
-                return;
-            }
-            break;
-        }
-        break;
-    case 3: // Leaves ghostly TEMPERATURE, FINGERPRINTS, and SOUND
-        switch (type)
-        {
-        case 0: // TEMP
-            type = 1;
-            value = randFloat(-10.00, 2.00);
-            if (value > 0.00)
-            {
-                StandardEvidencePrint(0);
-                return;
-            }
-            break;
-        case 1: // FINGER
-            type = 2;
-            value = randInt(0, 2);
-            if (value == 0)
-            {
-                StandardEvidencePrint(0);
-                return;
-            }
-            break;
-        case 2: // SOUND
-            type = 3;
-            value = randFloat(65.00, 76.00);
-            if (value < 70.00)
-            {
-                StandardEvidencePrint(0);
-                return;
-            }
-            break;
-        }
-        break;
-    }
-    theGhost->actualEvidence++;
-    // initializes EvidenceType and Adds to the back of the room LinkedListEvidence
-    EvidenceType *newEvidence;
-    
-    initEvidence(theGhost->evidenceID, type, value, &newEvidence);
-    printf("The Ghost has left %s ghostly evidence in %s.\n",devices[newEvidence->evidenceType],theGhost->currRoom->name);
-    theGhost->evidenceID++;
-    addEvidence(theGhost->currRoom->evidence, newEvidence);
+        theGhost->actualEvidence++;
+        // initializes EvidenceType and Adds to the back of the room LinkedListEvidence
+        EvidenceType *newEvidence;
+        
+        initEvidence(theGhost->evidenceID, type, value, &newEvidence);
+        printf("The Ghost has left %s ghostly evidence in %s.\n",devices[newEvidence->evidenceType],theGhost->currRoom->name);
+        theGhost->evidenceID++;
+        addEvidence(theGhost->currRoom->evidence, newEvidence);
+    //     if(sem_post(&theGhost->currRoom->mutexR) < 0){
+    //         printf("SEM WAIT ERROR");
+    //         exit(1);
+    //     }
+    // }
+   
 }
 
 /*
@@ -810,7 +795,7 @@ return:
 */
 void adjustGhostBoredom(GhostType *theGhost)
 {
-    int alone = ghostAlone(theGhost);
+    int alone = ghostAlone(theGhost); 
     if (alone == 1)
     {
         theGhost->boredom = BOREDOM_MAX;
@@ -830,14 +815,18 @@ out:
 return: 
 */
 int ghostAlone(GhostType *theGhost)
-{
-    for (int i = 0; i < 4; i++)
-    {
-        if (theGhost->currRoom->currHunters[i] != NULL)
+{   
+    // if(sem_trywait(&theGhost->currRoom->mutexR) == 0){
+        for (int i = 0; i < 4; i++)
         {
-            return 1;
+            if (theGhost->currRoom->currHunters[i] != NULL)
+            {return 1;}
         }
-    }
+    //     if(sem_post(&theGhost->currRoom->mutexR) < 0){
+    //         print("SEMAPHORE WAIT ERROR.");
+    //         exit(1);
+    //     }
+    // }
     return 0;
 }
 
@@ -850,33 +839,40 @@ out:
 return: 
 */
 void moveGhost(GhostType *theGhost)
-{
-    int size = theGhost->currRoom->connectedRooms->size;
-    int rand;
-    if (size == 1)
-    {
-        rand = 0;
-    }
-    else
-    {
-        rand = randInt(0, size - 1);
-    }
-    RoomNodeType *curr = theGhost->currRoom->connectedRooms->head;
+{   
+    // if(sem_trywait(&theGhost->currRoom->mutexR) == 0){
+        
+        int size = theGhost->currRoom->connectedRooms->size;
+        int rand = randInt(0, size);
 
-    int counter = 0;
-    while (curr != NULL && rand != counter)
-    {
-        curr = curr->next;
-        counter++;
-    }
-    if(strcmp(curr->room->name,"Van") == 0){
-        curr = curr->next->next;
-    }
-    printf("The Ghost has moved from %s to ",theGhost->currRoom->name);
-    theGhost->currRoom->ghost = NULL;
-    theGhost->currRoom = curr->room;
-    theGhost->currRoom->ghost = theGhost;
-    printf("%s.\n", theGhost->currRoom->name);
+        RoomNodeType *curr = theGhost->currRoom->connectedRooms->head;
+
+        int counter = 0;
+        while (curr != NULL && rand != counter)
+        {
+            curr = curr->next;
+            counter++;
+        }
+        if(sem_trywait(&curr->room->mutexR) == 0){
+
+            printf("The Ghost has moved from %s to ",theGhost->currRoom->name);
+            theGhost->currRoom->ghost = NULL;
+
+            theGhost->currRoom = curr->room;
+            theGhost->currRoom->ghost = theGhost;
+            printf("%s.\n", theGhost->currRoom->name);
+
+            if(sem_post(&theGhost->currRoom->mutexR) < 0){
+                printf("SEMAPHORE WAIT ERROR.");
+                exit(1);
+            }
+        }
+
+    //     if(sem_post(&theGhost->currRoom->mutexR) < 0){
+    //         print("SEMAPHORE WAIT ERROR.");
+    //         exit(1);
+    //     }
+    // }
 }
 
 /*
@@ -894,25 +890,33 @@ void ghostControl(GhostType *theGhost)
     //1 leave evidence
     //2 move
     */
-    int choice;
-    int alone = ghostAlone(theGhost);
-    if (alone == 1)
-    {
-        choice = randInt(0, 2);
+    if(sem_trywait(&theGhost->currRoom->mutexR) == 0){
+        int choice;
+        int bored;
+        int alone = ghostAlone(theGhost);
+        if (alone == 1)
+        {
+            choice = randInt(0, 2);
+        }
+        else
+        {
+            choice = randInt(0, 3);
+        }
+        if (choice == 1)
+        {
+            addGhostEvidence(theGhost); 
+        }
+        else if (choice == 2)
+        {
+            moveGhost(theGhost);
+        }
+        adjustGhostBoredom(theGhost);
+        bored = ghostBored(theGhost);
+        if(sem_post(&theGhost->currRoom->mutexR) < 0){
+	        printf("SEMAPHORE WAIT ERROR.");
+	        exit(1);
+        }
     }
-    else
-    {
-        choice = randInt(0, 3);
-    }
-    if (choice == 1)
-    {
-        addGhostEvidence(theGhost);
-    }
-    else if (choice == 2)
-    {
-        moveGhost(theGhost);
-    }
-    adjustGhostBoredom(theGhost);
 }
 
 /*
@@ -961,7 +965,13 @@ void initHunter(char *name, int fear, int boredom, RoomType *currRoom, EvidenceC
 {
     *notebook = (EvidenceLinkedList *)calloc(1, sizeof(EvidenceLinkedList));
     (*notebook)->head = NULL;
-
+    sem_t mutexN;
+    if(sem_init(&mutexN, 0 , 1) < 0){
+        printf("Semaphore initialization error.\n");
+        exit(1);
+    }
+    (*notebook)->mutexN = mutexN;
+    
     *hunter = (HunterType *)calloc(1, sizeof(HunterType));
 
     (*hunter)->id = id;
@@ -981,38 +991,53 @@ out:
 return: 
 */
 int enoughEvidence(HunterType* theHunter){
-    int emf=0;//0
-    int temp=0;//1
-    int finger=0;//2
-    int sound=0;//3
-    int counter=0;
-    EvidenceNodeType* curr = theHunter->notebook->head;
-    while(curr!=NULL){
-        if(curr->evidence->evidenceType==0){
-            emf++;
-        }else if(curr->evidence->evidenceType==1){
-            temp++;
-        }else if(curr->evidence->evidenceType==2){
-            finger++;
-        }else if(curr->evidence->evidenceType==3){
-            sound++;
+    // if(sem_trywait(&theHunter->notebook->mutexN) == 0){
+        int emf=0;//0
+        int temp=0;//1
+        int finger=0;//2
+        int sound=0;//3
+        int counter=0;
+        EvidenceNodeType* curr = theHunter->notebook->head;
+        while(curr!=NULL){
+            if(curr->evidence->evidenceType==0){
+                emf++;
+            }else if(curr->evidence->evidenceType==1){
+                temp++;
+            }else if(curr->evidence->evidenceType==2){
+                finger++;
+            }else if(curr->evidence->evidenceType==3){
+                sound++;
+            }
+            curr = curr->next;
         }
-        curr = curr->next;
-    }
-    if(emf>=1){
-        counter++;
-    }
-    if(temp>=1){
-        counter++;
-    }
-    if(finger>=1){
-        counter++;
-    }
-    if(sound>=1){
-        counter++;
-    }
-    if(counter >=3){
-        return 1;
+        if(emf>=1){
+            counter++;
+        }
+        if(temp>=1){
+            counter++;
+        }
+        if(finger>=1){
+            counter++;
+        }
+        if(sound>=1){
+            counter++;
+        }
+        if(counter >=3){
+            return 1;
+        }
+    //     if(sem_post(&theHunter->notebook->mutexN) < 0){
+    //         print("SEMAPHORE WAIT ERROR.");
+    //         exit(1);
+    //     }
+    // }
+    return 0;
+}
+
+int enoughE(HunterType* theHunter){
+    int enough = enoughEvidence(theHunter);
+    if(enough == 1){
+        theHunter->building->game_over = 1;
+        theHunter->building->enoughEvidence = theHunter->id;
     }
     return 0;
 }
@@ -1025,15 +1050,18 @@ in:
 out:  
 return: 
 */
-void hunterscared(HunterType** theHunter){
-    if((*theHunter)->fear ==100){
-        RoomType *temp = (*theHunter)->currRoom;
-        printf("%s has ran away in fear.\n",(*theHunter)->name);
-        (*theHunter)->fear++;
-        while(strcmp((*theHunter)->currRoom->name,"yourMom") != 0){
-            (*theHunter)->currRoom = (*theHunter)->currRoom->connectedRooms->head->room;
-        }
-        temp->currHunters[(*theHunter)->id] = NULL;
+void hunterscared(HunterType* theHunter){
+    if(theHunter->fear >= 100) {
+        // if(sem_trywait(&theHunter->currRoom->mutexR) == 0){
+        theHunter->building->huntersScared++;
+        theHunter->currRoom->currHunters[theHunter->id] = NULL;
+        printf("%s has ran away in fear.\n", theHunter->name);
+        
+        //     if(sem_post(&theHunter->currRoom->mutexR) < 0){
+	    //         print("SEMAPHORE WAIT ERROR.");
+	    //         exit(1);
+        //     }
+        // }
     }
 }
 
@@ -1045,15 +1073,17 @@ in:
 out:  
 return: 
 */
-void hunterBored(HunterType** theHunter){
-    if((*theHunter)->boredom==0){
-        RoomType *temp = (*theHunter)->currRoom;
-        printf("%s got bored and left.\n",(*theHunter)->name);
-        (*theHunter)->boredom--;
-        while(strcmp((*theHunter)->currRoom->name,"yourMom") != 0){
-            (*theHunter)->currRoom = (*theHunter)->currRoom->connectedRooms->head->room;
-        }
-        temp->currHunters[(*theHunter)->id] = NULL;
+void hunterBored(HunterType* theHunter){
+    if(theHunter->boredom <= 0) {
+        // if(sem_trywait(&theHunter->currRoom->mutexR) == 0){
+        theHunter->building->huntersBored++;
+        theHunter->currRoom->currHunters[theHunter->id] = NULL;
+        printf("%s got bored and left.\n", theHunter->name);
+        //     if(sem_post(&theHunter->currRoom->mutexR) < 0){
+	    //         print("SEMAPHORE WAIT ERROR.");
+	    //         exit(1);
+        //     }
+        // }
     }
 }
 
@@ -1110,11 +1140,10 @@ int hunterNear(HunterType *theHunter)
     for (int i = 0; i < 4; i++){
         if(theHunter->currRoom->currHunters[i]!=NULL){
             isAlone++;
+            if(isAlone > 2){return 0;}
         }
     }
-    if(isAlone>2){
-        return 0;
-    }
+
     return 1;
 }
 
@@ -1145,11 +1174,6 @@ return:
 */
 void loadHunnters(BuildingType *building)
 {
-    /* do some for loop or while loop
-     user validation as well ( maybe a separate function)
-     and create all our hunters the parameter of this function is
-     the buildings array starting address*/
-
     int counter = 0;
     while (counter < 4)
     {
@@ -1157,7 +1181,7 @@ void loadHunnters(BuildingType *building)
         HunterType *hunter;
         char name[MAX_STR] = {0};
         enterName(name, counter + 1);
-        initHunter(name, FEAR_RATE, BOREDOM_MAX, building->MasterRooms.head->next->room, counter, &notebook, &hunter, counter);
+        initHunter(name, FEAR_RATE, BOREDOM_MAX, building->MasterRooms.head->room, counter, &notebook, &hunter, counter);
         building->MasterRooms.head->next->room->currHunters[counter] = hunter;
         building->hunters[counter] = hunter;
         building->hunters[counter]->building = building;
@@ -1216,13 +1240,16 @@ void moveHunter(HunterType *theHunter, int x)
         curr = curr->next;
         counter++;
     }
-    if(strcmp(curr->room->name,"yourMom")==0){
-        curr = curr->next->room->connectedRooms->head->room->connectedRooms->head->next;
+    if(sem_trywait(&curr->room->mutexR) == 0){
+        printf("%s moved from %s to %s.\n", theHunter->name, theHunter->currRoom->name, curr->room->name);
+        theHunter->currRoom->currHunters[x] = NULL;
+        theHunter->currRoom = curr->room;
+        curr->room->currHunters[x] = theHunter;
+        if(sem_post(&curr->room->mutexR) < 0){
+	        printf("SEMAPHORE WAIT ERROR.");
+	        exit(1);
+        }
     }
-    printf("%s moved from %s to %s.\n", theHunter->name, theHunter->currRoom->name, curr->room->name);
-    theHunter->currRoom->currHunters[x] = NULL;
-    theHunter->currRoom = curr->room;
-    curr->room->currHunters[x] = theHunter;
 }
 
 /*
@@ -1280,129 +1307,8 @@ void takeEvidence(EvidenceLinkedList *room, EvidenceLinkedList *hunter, int id, 
     free(curr);
 }
 
-
 /*
-void takeEvidence(EvidenceLinkedList *room, EvidenceLinkedList *hunter, int id)
-{
-    EvidenceNodeType *curr = room->head;
-    EvidenceNodeType *prev = NULL;
-    while (curr != NULL)
-    {
-        if (curr->evidence->id != id)
-        {
-            prev = curr;
-            curr = curr->next;
-        }
-        else
-        {
-            if (curr->next == NULL)
-            {
-                // if notebook is empty
-                if (hunter->head == NULL)
-                {
-                    if (prev == NULL)
-                    {
-                        room->head = NULL;
-                        hunter->head = curr;
-                        hunter->head->next = NULL;
-                    }
-                    else if (prev == room->head)
-                    {
-                        prev->next = NULL;
-                        room->head = prev;
-                        hunter->head = curr;
-                        hunter->head->next = NULL;
-                    }
-                    else
-                    {
-                        prev->next = NULL;
-                        hunter->head = curr;
-                        hunter->head->next = NULL;
-                    }
-                }
-                else
-                {
-                    if (prev == NULL)
-                    {
-                        room->head = NULL;
-                        curr->next = hunter->head;
-                        hunter->head = curr;
-                    }
-                    else if (prev == room->head)
-                    {
-                        prev->next = NULL;
-                        curr->next = hunter->head;
-                        hunter->head = curr;
-                        room->head->next = NULL;
-                    }
-                    else
-                    {
-                        prev->next = NULL;
-                        curr->next = hunter->head;
-                        hunter->head = curr;
-                    }
-                }
-            }
-            else if (hunter->head == NULL)
-            {
-                if (prev == NULL)
-                {
-                    room->head = curr->next;
-                    hunter->head = curr;
-                    hunter->head->next = NULL;
-                }
-                else
-                {
-                    prev->next = curr->next;
-                    hunter->head = curr;
-                    hunter->head->next = NULL;
-                }
-            }
-            else
-            {
-                if (prev == NULL)
-                {
-                    room->head = curr->next;
-                    curr->next = hunter->head;
-                    hunter->head = curr;
-                }
-                else
-                {
-                    prev->next = curr->next;
-                    curr->next = hunter->head;
-                    hunter->head = curr;
-                }
-            }
-            break;
-        }
-    }
-}
-void takeEvidence2(EvidenceLinkedList* room, EvidenceLinkedList* hunter, int id){
-    // EvidenceNodeType* curr = room->head;
-    // EvidenceNodeType* prev = NULL;
-
-    // while (curr!=NULL){
-    //     // traverse if id does not match
-    //     if(curr->evidence->id == id){
-    //         break;
-    //     }
-    //     prev = curr;
-    //     curr = curr->next;
-    // }
-    // // make a new node
-    // EvidenceNodeType* new = (EvidenceNodeType*) calloc (1,sizeof(EvidenceNodeType));
-    // new = curr;
-    // new->next = NULL;
-
-    // // check if we are at the first node of the room
-    // if(prev == NULL){
-        
-    // }
-}   
-*/
-
-/*
-Function:   
+Function: checkRoomEvidence
 Purpose:   
 in/out:   
 in: 
@@ -1574,47 +1480,53 @@ void hunterControl(HunterType *theHunter, BuildingType* theBuilding)
     1 is look for evidence
     2 is compare evidence
     */
-    ghostNear(theHunter);
-    int counter;
-    int choice;
-    int alone = hunterNear(theHunter);
-    if (alone == 1)
-    {
-        choice = randInt(0, 2);
-    }
-    else
-    {
-        choice = randInt(0, 3);
-    }
-    if (choice == 0)
-    {
-        moveHunter(theHunter, theHunter->id);
-    }
-    else if (choice == 1)
-    {
-        checkRoomEvidence(theHunter,theBuilding);
-    }
-    else if (choice == 2)
-    {
-        if(theHunter->notebook->head!=NULL){
-            int x = 0;
-            while(x == 0){
-                counter = randInt(0, 4);
-                if(theHunter->currRoom->currHunters[counter] != NULL){
-                if (theHunter->currRoom->currHunters[counter]->id != theHunter->id){
-                        x = 1;
+    if(sem_trywait(&theHunter->currRoom->mutexR)==0){
+        ghostNear(theHunter);
+        int counter;
+        int choice;
+        int alone = hunterNear(theHunter);
+        if (alone == 1)
+        {
+            choice = randInt(0, 2);
+        }
+        else
+        {
+            choice = randInt(0, 3);
+        }
+        if (choice == 0)
+        {
+            moveHunter(theHunter, theHunter->id);
+        }
+        else if (choice == 1)
+        {
+            checkRoomEvidence(theHunter,theBuilding);
+        }
+        else if (choice == 2)
+        {
+            if(theHunter->notebook->head!=NULL){
+                int x = 0;
+                while(x == 0){
+                    counter = randInt(0, 4);
+                    if(theHunter->currRoom->currHunters[counter] != NULL){
+                        if (theHunter->currRoom->currHunters[counter]->id != theHunter->id){
+                            x = 1;
+                        }
                     }
                 }
+            compareEvidence(theHunter,theHunter->currRoom->currHunters[counter]);
+            } else {
+                printf("%s had no evidence to share.\n", theHunter->name);
             }
-        compareEvidence(theHunter,theHunter->currRoom->currHunters[counter]);
-        } else {
-            printf("%s had no evidence to share.\n", theHunter->name);
+        }
+        if(sem_post(&theHunter->currRoom->mutexR) < 0){
+	        printf("SEMAPHORE WAIT ERROR.");
+	        exit(1);
         }
     }
 }
 
 /*
-Function:   
+Function: cleanNotebook
 Purpose:   
 in/out:   
 in: 
@@ -1636,7 +1548,7 @@ void cleanNotebook(HunterType** hunter){
 =======================================================================================================*/
 
 /*
-Function:   
+Function: initEvidence
 Purpose:   
 in/out:   
 in: 
@@ -1652,7 +1564,7 @@ void initEvidence(int id, EvidenceClassType device, float value, EvidenceType **
 }
 
 /*
-Function:   
+Function: addEvidence 
 Purpose:   
 in/out:   
 in: 
@@ -1678,7 +1590,7 @@ void addEvidence(EvidenceLinkedList *roomEvidenceList, EvidenceType *newEvidence
 }
 
 /*
-Function:   
+Function: printRoomEvidence
 Purpose:   
 in/out:   
 in: 

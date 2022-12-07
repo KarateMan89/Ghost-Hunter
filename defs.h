@@ -61,6 +61,7 @@ typedef struct EvidenceNode
 typedef struct EvidenceList
 {
 	EvidenceNodeType *head;
+	sem_t mutexN;
 } EvidenceLinkedList;
 
 typedef struct
@@ -70,6 +71,7 @@ typedef struct
 	EvidenceLinkedList *evidence;
 	struct Hunter *currHunters[MAX_HUNTERS];
 	struct Ghost *ghost;
+	sem_t mutexR;
 } RoomType;
 
 typedef struct RoomNode
@@ -113,7 +115,11 @@ typedef struct Building
 	RoomLinkedList MasterRooms;
 	HunterType *hunters[MAX_HUNTERS];
 	EvidenceLinkedList* collectedEvidence;
-	sem_t mutex;
+	int game_over;
+	int ghost_bored;
+	int huntersBored;
+	int huntersScared;
+	int enoughEvidence;
 } BuildingType;
 
 void initBuilding(BuildingType *building);
@@ -131,7 +137,7 @@ void printRoomEvidence(EvidenceLinkedList *roomEvidence);
 void addGhostEvidence(GhostType *theGhost);
 void* hunterFoo(void* hunter);
 void* ghostFoo(void* ghost);
-void appendRoom(RoomLinkedList *list, RoomNodeType *new);
+void appendRoom(RoomLinkedList *list, RoomNodeType *newNode);
 void connectRooms(RoomType *x, RoomType *y);
 void cleanBuildingRoomList(RoomLinkedList MasterRooms);
 void cleanBuilding(BuildingType* building);
@@ -142,8 +148,8 @@ void ghostControl(GhostType *theGhost);
 void cleanRoomList(RoomType* room);
 void initHunter(char *name, int fear, int boredom, RoomType *currRoom, EvidenceClassType device, EvidenceLinkedList **notebook, HunterType **hunter, int id);
 int enoughEvidence(HunterType* theHunter);
-void hunterscared(HunterType** theHunter);
-void hunterBored(HunterType** theHunter);
+void hunterscared(HunterType* theHunter);
+void hunterBored(HunterType* theHunter);
 void decreaseHunterBoredom(HunterType *theHunter);
 void resetHunterBoredom(HunterType *theHunter);
 void increaseHunterFear(HunterType *theHunter);
@@ -163,11 +169,18 @@ void initEvidence(int id, EvidenceClassType device, float value, EvidenceType **
 void addEvidence(EvidenceLinkedList *roomEvidenceList, EvidenceType *newEvidence);
 void printRoomEvidence(EvidenceLinkedList *roomEvidence);
 int endersGame(BuildingType* building);
-
-
-
+void printResults(BuildingType *theBuilding);
 
 
 int randInt(int, int);				// Generates a pseudorandom integer between the parameters
 float randFloat(float, float);		// Generates a pseudorandom float between the parameters
 void populateRooms(BuildingType *); // Populates the building with sample data for rooms
+
+
+
+// if(sem_trywait(&theGhost->currRoom->mutexR) == 0)
+
+// if(sem_post(&theGhost->currRoom->mutexR) < 0){
+// 	print("SEMAPHORE WAIT ERROR.");
+// 	exit(1);
+// }
