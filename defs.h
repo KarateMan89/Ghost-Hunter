@@ -26,6 +26,7 @@ typedef enum
 	FINGERPRINTS,
 	SOUND
 } EvidenceClassType;
+
 typedef enum
 {
 	POLTERGEIST,
@@ -33,17 +34,6 @@ typedef enum
 	BULLIES,
 	PHANTOM
 } GhostClassType;
-char *devices[] = {
-	[EMF] = "EMF",
-	[TEMPERATURE] = "TEMPERATURE",
-	[FINGERPRINTS] = "FINGERPRITNS",
-	[SOUND] = "SOUND"};
-char *ghostNames[] = {
-	[POLTERGEIST] = "POLTERGEIST",
-	[BANSHEE] = "BANSHEE",
-	[BULLIES] = "BULLIES",
-	[PHANTOM] = "PHANTOM",
-};
 
 typedef struct
 {
@@ -121,10 +111,11 @@ typedef struct Building
 	int enoughEvidence;
 } BuildingType;
 
-void initBuilding(BuildingType *);
+
 void populateRooms(BuildingType *);
 void initRoomList(RoomLinkedList *);
 void initRoom(RoomType *, char *);
+void initBuilding(BuildingType *);
 void printRooms(RoomLinkedList *);
 void printConnected(RoomLinkedList *);
 void initEvidence(int , EvidenceClassType , float , EvidenceType **);
@@ -136,12 +127,11 @@ void printRoomEvidence(EvidenceLinkedList *roomEvidence);
 void addGhostEvidence(GhostType *theGhost);
 void* hunterFoo(void*);
 void* ghostFoo(void*);
-void appendRoom(RoomLinkedList *list, RoomNodeType *newNode);
+void appendRoom(RoomLinkedList *list, RoomNodeType *new);
 void connectRooms(RoomType *x, RoomType *y);
 void cleanBuildingRoomList(RoomLinkedList MasterRooms);
 void cleanBuilding(BuildingType* building);
 void StandardEvidencePrint(int x);
-void addGhostEvidence(GhostType *theGhost);
 int ghostAlone(GhostType *theGhost);
 void ghostControl(GhostType *theGhost);
 void cleanRoomList(RoomType* room);
@@ -164,23 +154,8 @@ void copyEvidence(EvidenceNodeType *evidenceNode, EvidenceLinkedList *hunterR);
 void compareEvidence(HunterType *hunterSending, HunterType *hunterReceiving);
 void hunterControl(HunterType *theHunter, BuildingType* theBuilding);
 void cleanNotebook(HunterType** hunter);
-void initEvidence(int id, EvidenceClassType device, float value, EvidenceType **newEvidence);
-void addEvidence(EvidenceLinkedList *roomEvidenceList, EvidenceType *newEvidence);
-void printRoomEvidence(EvidenceLinkedList *roomEvidence);
-int endersGame(BuildingType* building);
 void printResults(BuildingType *theBuilding);
 int gameOver(BuildingType*);
-
-
 int randInt(int, int);				// Generates a pseudorandom integer between the parameters
 float randFloat(float, float);		// Generates a pseudorandom float between the parameters
-void populateRooms(BuildingType *); // Populates the building with sample data for rooms
-
-
-
-// if(sem_trywait(&theGhost->currRoom->mutexR) == 0)
-
-// if(sem_post(&theGhost->currRoom->mutexR) < 0){
-// 	print("SEMAPHORE WAIT ERROR.");
-// 	exit(1);
-// }
+int enoughE(HunterType *theHunter);
