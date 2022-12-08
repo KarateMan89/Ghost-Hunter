@@ -61,7 +61,6 @@ typedef struct EvidenceNode
 typedef struct EvidenceList
 {
 	EvidenceNodeType *head;
-	sem_t mutexN;
 } EvidenceLinkedList;
 
 typedef struct
@@ -122,21 +121,21 @@ typedef struct Building
 	int enoughEvidence;
 } BuildingType;
 
-void initBuilding(BuildingType *building);
-void populateRooms(BuildingType *building);
-void initRoomList(RoomLinkedList *rooms);
-void initRoom(RoomType *room, char *name);
-void printRooms(RoomLinkedList *building);
-void printConnected(RoomLinkedList *roomList);
-void initEvidence(int id, EvidenceClassType device, float value, EvidenceType **newEvidence);
-void initGhost(GhostType **ghost, GhostClassType randomGhost, RoomType *startRoom, int id);
+void initBuilding(BuildingType *);
+void populateRooms(BuildingType *);
+void initRoomList(RoomLinkedList *);
+void initRoom(RoomType *, char *);
+void printRooms(RoomLinkedList *);
+void printConnected(RoomLinkedList *);
+void initEvidence(int , EvidenceClassType , float , EvidenceType **);
+void initGhost(GhostType **, GhostClassType , RoomType *, int );
 void loadGhost(BuildingType *building);
 void moveGhost(GhostType *theGhost);
 void addEvidence(EvidenceLinkedList *roomEvidenceList, EvidenceType *newEvidence);
 void printRoomEvidence(EvidenceLinkedList *roomEvidence);
 void addGhostEvidence(GhostType *theGhost);
-void* hunterFoo(void* hunter);
-void* ghostFoo(void* ghost);
+void* hunterFoo(void*);
+void* ghostFoo(void*);
 void appendRoom(RoomLinkedList *list, RoomNodeType *newNode);
 void connectRooms(RoomType *x, RoomType *y);
 void cleanBuildingRoomList(RoomLinkedList MasterRooms);
@@ -170,6 +169,7 @@ void addEvidence(EvidenceLinkedList *roomEvidenceList, EvidenceType *newEvidence
 void printRoomEvidence(EvidenceLinkedList *roomEvidence);
 int endersGame(BuildingType* building);
 void printResults(BuildingType *theBuilding);
+int gameOver(BuildingType*);
 
 
 int randInt(int, int);				// Generates a pseudorandom integer between the parameters

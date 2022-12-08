@@ -31,9 +31,13 @@ int main(int argc, char *argv[])
     pthread_t h1, h2, h3, h4, gh;
 
     pthread_create(&gh, NULL, ghostFoo, building.theGhost);
+    
     pthread_create(&h1, NULL, hunterFoo, building.hunters[0]);
+    
     pthread_create(&h2, NULL, hunterFoo, building.hunters[1]);
+
     pthread_create(&h3, NULL, hunterFoo, building.hunters[2]);
+
     pthread_create(&h4, NULL, hunterFoo, building.hunters[3]);
 
     pthread_join(gh,NULL);
@@ -55,7 +59,7 @@ int gameOver(BuildingType* theBuilding){
         return 1;
     }else if(theBuilding->huntersScared + theBuilding->huntersBored >= 4){
         return 1;
-    }else if(enoughEvidence >= 0){
+    }else if(theBuilding->enoughEvidence >= 0){
         return 1;
     }
     return 0;
@@ -63,13 +67,13 @@ int gameOver(BuildingType* theBuilding){
 
 void printResults(BuildingType* theBuilding){
     printf("===GAME OVER===\n");
-    if(theBuilding->ghost_bored==1){
-        printf("The ghost got bored and has left the building.\nThe game is a tie.");
+    if(theBuilding->ghost_bored == 1){
+        printf("The ghost got bored and has left the building.\nThe game is a tie.\n");
     }
         for (int i = 0; i < 4;i++){
                 if(theBuilding->hunters[i]->boredom<=0){
                     printf("%s left the building from boredom.\n",theBuilding->hunters[i]->name);
-                }else if(theBuilding->hunters[1]->fear>=100){
+                }if(theBuilding->hunters[i]->fear>=100){
                     printf("%s ran away from the building in fear.\n", theBuilding->hunters[i]->name);
                 }
         }
@@ -84,19 +88,24 @@ void printResults(BuildingType* theBuilding){
 void* hunterFoo(void* h){
     HunterType* hunter = (HunterType*) h;
     int over = 0;
-    while(hunter->building->game_over != 1){
+    while(over != 1){
+        if(hunter->fear>=100||hunter->boredom<=0){
+            break;
+        }
         hunterControl(hunter, hunter->building);
         over = gameOver(hunter->building);
+        usleep(110000);
     }
     return 0;
 }
 
 void* ghostFoo(void* gh){
-    GhostType* ghost = (GhostType*) gh;
+    GhostType* ghost = (GhostType*)gh;
     int over = 0;
     while(over != 1){
         ghostControl(ghost);
         over = gameOver(ghost->building);
+        usleep(110000);
     }
     return 0;
 }
@@ -220,6 +229,7 @@ void initBuilding(BuildingType *building)
     EvidenceLinkedList* collectedEvidence = (EvidenceLinkedList*) calloc(1,sizeof(EvidenceLinkedList));
     collectedEvidence->head = NULL;
     building->collectedEvidence = collectedEvidence;
+    building->ghost_bored = 0;
     building->game_over = 0;
     building->huntersBored = 0;
     building->huntersScared = 0;
@@ -846,7 +856,7 @@ void moveGhost(GhostType *theGhost)
         int rand = randInt(0, size);
 
         RoomNodeType *curr = theGhost->currRoom->connectedRooms->head;
-
+        RoomNodeType *prev = theGhost->currRoom->connectedRooms->head;
         int counter = 0;
         while (curr != NULL && rand != counter)
         {
@@ -862,7 +872,7 @@ void moveGhost(GhostType *theGhost)
             theGhost->currRoom->ghost = theGhost;
             printf("%s.\n", theGhost->currRoom->name);
 
-            if(sem_post(&theGhost->currRoom->mutexR) < 0){
+            if(sem_post(&prev->room->mutexR) < 0){
                 printf("SEMAPHORE WAIT ERROR.");
                 exit(1);
             }
@@ -965,12 +975,6 @@ void initHunter(char *name, int fear, int boredom, RoomType *currRoom, EvidenceC
 {
     *notebook = (EvidenceLinkedList *)calloc(1, sizeof(EvidenceLinkedList));
     (*notebook)->head = NULL;
-    sem_t mutexN;
-    if(sem_init(&mutexN, 0 , 1) < 0){
-        printf("Semaphore initialization error.\n");
-        exit(1);
-    }
-    (*notebook)->mutexN = mutexN;
     
     *hunter = (HunterType *)calloc(1, sizeof(HunterType));
 
@@ -1233,6 +1237,7 @@ void moveHunter(HunterType *theHunter, int x)
         rand = randInt(0, size);
     }
     RoomNodeType *curr = theHunter->currRoom->connectedRooms->head;
+    RoomNodeType *prev = theHunter->currRoom->connectedRooms->head;
 
     int counter = 0;
     while (curr != NULL && rand != counter)
@@ -1245,10 +1250,7 @@ void moveHunter(HunterType *theHunter, int x)
         theHunter->currRoom->currHunters[x] = NULL;
         theHunter->currRoom = curr->room;
         curr->room->currHunters[x] = theHunter;
-        if(sem_post(&curr->room->mutexR) < 0){
-	        printf("SEMAPHORE WAIT ERROR.");
-	        exit(1);
-        }
+        sem_post(&prev->room->mutexR);
     }
 }
 
@@ -1518,6 +1520,8 @@ void hunterControl(HunterType *theHunter, BuildingType* theBuilding)
                 printf("%s had no evidence to share.\n", theHunter->name);
             }
         }
+        hunterscared(theHunter);
+        hunterBored(theHunter);
         if(sem_post(&theHunter->currRoom->mutexR) < 0){
 	        printf("SEMAPHORE WAIT ERROR.");
 	        exit(1);
