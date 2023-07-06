@@ -1,9 +1,3 @@
-Yordan Slavchev
-101249727
-&
-Thomas Cheesman
-101250237
-
 Ghost Hunter Game
 
 Ghost Hunter is a simple game that simulates a group of hunters trying to capture a ghost in a haunted building. The game is implemented using C and pthreads for multithreading.
